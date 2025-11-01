@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Editor from "@monaco-editor/react";
 import { DiagramCanvas } from "./diagram-canvas";
 import { FileExplorer } from "./file-explorer";
@@ -296,9 +296,68 @@ export function SplitEditor() {
                         <div className="flex-1 relative">
                             <DiagramCanvas
                                 schema={parsedSchema}
+                                schemaContent={useMemo(() => {
+                                    // Pass only the main file content, not the merged schema
+                                    // because addRelationToSchema needs to work on a single file
+                                    const mainFile = schemaFiles.find((f) => f.isMain);
+                                    const content = mainFile?.content || getMergedSchema();
+                                    console.log("DiagramCanvas schemaContent (memoized):", {
+                                        hasMainFile: !!mainFile,
+                                        mainFileName: mainFile?.name,
+                                        contentLength: content?.length,
+                                        contentPreview: content?.substring(0, 100)
+                                    });
+                                    return content;
+                                }, [schemaFiles])}
                                 onNodesChange={handleDiagramNodesChange}
                                 onEdgesChange={handleDiagramEdgesChange}
                                 readonly={false}
+                                onSchemaUpdate={(updatedSchema) => {
+                                    console.log("onSchemaUpdate called in split-editor");
+                                    console.log("Updated schema length:", updatedSchema.length);
+                                    console.log("Updated schema preview:", updatedSchema.substring(0, 300));
+
+                                    // Update the main schema file with the new relation
+                                    const mainFile = schemaFiles.find((f) => f.isMain);
+                                    console.log("Main file:", mainFile?.name);
+
+                                    if (mainFile) {
+                                        // updatedSchema should already be just the main file content
+                                        // since we're now passing only main file content to DiagramCanvas
+
+                                        // Prevent editor from triggering parse while we update
+                                        isUpdatingFromDiagramRef.current = true;
+
+                                        // Update the schema file in the store
+                                        console.log("Updating schema file:", mainFile.name);
+                                        updateSchemaFile(mainFile.name, updatedSchema);
+
+                                        // Update the editor if it's currently showing the main file
+                                        if (editorRef.current && activeFileId === mainFile.name) {
+                                            console.log("Updating editor with new schema");
+                                            editorRef.current.setValue(updatedSchema);
+                                        }
+
+                                        // Get merged schema and re-parse
+                                        const mergedSchema = getMergedSchema();
+                                        try {
+                                            const parsed = parsePrismaSchema(mergedSchema);
+                                            setParsedSchema(parsed);
+                                            setError(null);
+                                            console.log("Schema re-parsed successfully, models:", parsed.models.length);
+                                        } catch (err) {
+                                            console.error("Failed to parse updated schema:", err);
+                                            setError(err instanceof Error ? err.message : "Failed to parse schema");
+                                        }
+
+                                        // Reset flag after a delay to allow parse to complete
+                                        setTimeout(() => {
+                                            isUpdatingFromDiagramRef.current = false;
+                                        }, 200);
+                                    } else {
+                                        console.warn("No main file found to update");
+                                    }
+                                }}
                             />
                         </div>
                     </div>

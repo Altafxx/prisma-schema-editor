@@ -243,8 +243,8 @@ export function convertSchemaToNodesAndEdges(
 
                         actualSourceField = model1Field?.name || "";
                         actualTargetField = model2Field?.name || "";
-                        actualSourceHandle = actualSourceField;
-                        actualTargetHandle = actualTargetField;
+                        actualSourceHandle = `${actualSourceField}-right`;
+                        actualTargetHandle = `${actualTargetField}-left`;
                     } else {
                         // For explicit relations, use the original logic
                         actualSource = model.name;
@@ -255,12 +255,14 @@ export function convertSchemaToNodesAndEdges(
                         actualTargetField = hasForeignKey
                             ? (field.relation.references?.[0] || "id")
                             : (targetField?.name || "id");
-                        actualSourceHandle = hasForeignKey
+                        const sourceFieldName = hasForeignKey
                             ? (field.relation.fields?.[0] || field.name)
                             : field.name;
-                        actualTargetHandle = hasForeignKey
+                        const targetFieldName = hasForeignKey
                             ? (field.relation.references?.[0] || "id")
                             : (targetField?.name || "id");
+                        actualSourceHandle = `${sourceFieldName}-right`;
+                        actualTargetHandle = `${targetFieldName}-left`;
                     }
 
                     // Create label with appropriate arrow direction

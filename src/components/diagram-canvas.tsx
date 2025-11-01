@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -15,12 +15,15 @@ import ReactFlow, {
     EdgeTypes,
     Handle,
     Position,
+    useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import type { ParsedPrismaSchema } from "@/types/prisma";
 import { convertSchemaToNodesAndEdges, type DiagramNodeData } from "@/lib/schema-generator";
 import dagre from "dagre";
 import { CustomEdge } from "./custom-edge";
+import { RelationDialog, type RelationOptions } from "./relation-dialog";
+import { addRelationToSchema, type ConnectionInfo } from "@/lib/schema-updater";
 
 interface HistoryState {
     nodes: Node[];
@@ -32,6 +35,28 @@ function ModelNode({ data }: { data: DiagramNodeData }) {
     const nodeRef = useRef<HTMLDivElement>(null);
     const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [fieldPositions, setFieldPositions] = useState<Record<string, number>>({});
+    const { getNodes } = useReactFlow();
+
+    // Get all model names to detect relation fields
+    const modelNames = useMemo(() => {
+        const nodes = getNodes();
+        return new Set(nodes.map(node => node.data.modelName));
+    }, [getNodes]);
+
+    // Check if a field is a relation field (type matches a model name)
+    const isRelationField = useCallback((field: DiagramNodeData['fields'][0]) => {
+        return modelNames.has(field.type);
+    }, [modelNames]);
+
+    // Sort fields: relation fields at the bottom
+    const sortedFields = useMemo(() => {
+        return [...data.fields].sort((a, b) => {
+            const aIsRelation = isRelationField(a);
+            const bIsRelation = isRelationField(b);
+            if (aIsRelation === bIsRelation) return 0;
+            return aIsRelation ? 1 : -1; // Relations come after non-relations
+        });
+    }, [data.fields, isRelationField]);
 
     const updatePositions = useCallback(() => {
         if (!nodeRef.current) return;
@@ -76,7 +101,7 @@ function ModelNode({ data }: { data: DiagramNodeData }) {
             clearTimeout(timeout2);
             window.removeEventListener("resize", updatePositions);
         };
-    }, [data.fields, updatePositions]);
+    }, [sortedFields, updatePositions]);
 
     return (
         <div
@@ -87,8 +112,9 @@ function ModelNode({ data }: { data: DiagramNodeData }) {
                 {data.modelName}
             </div>
             <div className="px-3 py-2">
-                {data.fields.map((field, idx) => {
+                {sortedFields.map((field, idx) => {
                     const handleTop = fieldPositions[field.name];
+                    const isRelation = isRelationField(field);
 
                     return (
                         <div
@@ -103,40 +129,80 @@ function ModelNode({ data }: { data: DiagramNodeData }) {
                             data-field-name={field.name}
                             className="text-sm border-b border-zinc-200 dark:border-zinc-800 pb-2 pt-2 last:border-0 relative min-h-[50px] flex items-center"
                         >
-                            {/* Left handle */}
-                            <Handle
-                                type="target"
-                                position={Position.Left}
-                                id={field.name}
-                                className="!absolute !w-3 !h-3 bg-green-500 border-2 border-white dark:border-zinc-900 rounded-full z-10 pointer-events-auto"
-                                style={{
-                                    top: "50%", // Center relative to this row
-                                    left: "-19px",
-                                    transform: "translateY(-50%)",
-                                }}
-                            />
+                            {/* Left handle - target type (receives from right source handles) - hidden for relation fields */}
+                            {!isRelation && (
+                                <Handle
+                                    type="target"
+                                    position={Position.Left}
+                                    id={`${field.name}-left`}
+                                    className="!absolute !w-3 !h-3 bg-green-500 border-2 border-white dark:border-zinc-900 rounded-full z-10 pointer-events-auto"
+                                    style={{
+                                        top: "50%", // Center relative to this row
+                                        left: "-19px",
+                                        transform: "translateY(-50%)",
+                                    }}
+                                />
+                            )}
+                            {/* Left handle - source type (can initiate connections to target handles) - hidden but functional - hidden for relation fields */}
+                            {!isRelation && (
+                                <Handle
+                                    type="source"
+                                    position={Position.Left}
+                                    id={`${field.name}-left-source`}
+                                    className="!absolute !w-3 !h-3 bg-green-500 border-2 border-white dark:border-zinc-900 rounded-full z-10 pointer-events-auto"
+                                    style={{
+                                        top: "50%", // Center relative to this row
+                                        left: "-19px",
+                                        transform: "translateY(-50%)",
+                                        opacity: 0,
+                                        pointerEvents: "auto",
+                                    }}
+                                />
+                            )}
 
-                            {/* Right handle */}
-                            <Handle
-                                type="source"
-                                position={Position.Right}
-                                id={field.name}
-                                className="!absolute !w-3 !h-3 bg-blue-500 border-2 border-white dark:border-zinc-900 rounded-full z-10 pointer-events-auto"
-                                style={{
-                                    top: "50%", // Center relative to this row
-                                    right: "-19px",
-                                    transform: "translateY(-50%)",
-                                }}
-                            />
+                            {/* Right handle - source type (sends to left target handles) - hidden for relation fields */}
+                            {!isRelation && (
+                                <Handle
+                                    type="source"
+                                    position={Position.Right}
+                                    id={`${field.name}-right`}
+                                    className="!absolute !w-3 !h-3 bg-blue-500 border-2 border-white dark:border-zinc-900 rounded-full z-10 pointer-events-auto"
+                                    style={{
+                                        top: "50%", // Center relative to this row
+                                        right: "-19px",
+                                        transform: "translateY(-50%)",
+                                    }}
+                                />
+                            )}
+                            {/* Right handle - target type (can receive from source handles) - hidden but functional - hidden for relation fields */}
+                            {!isRelation && (
+                                <Handle
+                                    type="target"
+                                    position={Position.Right}
+                                    id={`${field.name}-right-target`}
+                                    className="!absolute !w-3 !h-3 bg-blue-500 border-2 border-white dark:border-zinc-900 rounded-full z-10 pointer-events-auto"
+                                    style={{
+                                        top: "50%", // Center relative to this row
+                                        right: "-19px",
+                                        transform: "translateY(-50%)",
+                                        opacity: 0,
+                                        pointerEvents: "auto",
+                                    }}
+                                />
+                            )}
 
 
                             <div className="flex-1 flex flex-col gap-0.5">
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="font-mono text-xs">
                                         {field.name}
-                                        {field.isOptional ? "?" : ""}
                                     </span>
                                     <div className="flex gap-1">
+                                        {field.isOptional && (
+                                            <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded">
+                                                ?
+                                            </span>
+                                        )}
                                         {field.isId && (
                                             <span className="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs rounded">
                                                 PK
@@ -203,19 +269,32 @@ function getLayoutedElements(nodes: Node[], edges: Edge[]) {
 
 interface DiagramCanvasProps {
     schema: ParsedPrismaSchema | null;
+    schemaContent?: string;
     onNodesChange?: (nodes: Node[]) => void;
     onEdgesChange?: (edges: Edge[]) => void;
     readonly?: boolean;
+    onSchemaUpdate?: (schemaContent: string) => void;
 }
 
 export function DiagramCanvas({
     schema,
+    schemaContent = "",
     onNodesChange: externalOnNodesChange,
     onEdgesChange: externalOnEdgesChange,
     readonly = false,
+    onSchemaUpdate,
 }: DiagramCanvasProps) {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [pendingConnection, setPendingConnection] = useState<{
+        connection: Connection;
+        connectionInfo: ConnectionInfo;
+    } | null>(null);
+    // Track the actual drag direction (before ReactFlow normalizes it)
+    const connectionStartRef = useRef<{
+        nodeId: string;
+        handleId: string;
+    } | null>(null);
     const historyRef = useRef<{
         pushToHistory: (nodes: Node[], edges: Edge[]) => void;
         undo: () => HistoryState | null;
@@ -350,22 +429,185 @@ export function DiagramCanvas({
         };
     }, [nodes, edges, readonly, saveToHistory]);
 
-    const onConnect = useCallback(
-        (params: Connection) => {
-            if (readonly) return;
-            const newEdges = addEdge(params, edges);
-            setEdges(newEdges);
-            if (externalOnEdgesChange) {
-                externalOnEdgesChange(newEdges);
-            }
-            // Save to history immediately when connection is made
-            if (historyRef.current) {
-                historyRef.current.pushToHistory(nodes, newEdges);
-                lastSaveRef.current = { nodes: [...nodes], edges: [...newEdges] };
+    // Track connection start to capture actual drag direction
+    const onConnectStart = useCallback(
+        (event: any, { nodeId, handleId, handleType }: { nodeId: string | null; handleId: string | null; handleType?: string | null }) => {
+            if (nodeId && handleId) {
+                connectionStartRef.current = { nodeId, handleId };
             }
         },
-        [edges, nodes, readonly, setEdges, externalOnEdgesChange]
+        []
     );
+
+    const onConnect = useCallback(
+        (params: Connection) => {
+            if (readonly || !params.source || !params.target || !params.sourceHandle || !params.targetHandle) {
+                connectionStartRef.current = null;
+                return;
+            }
+
+            // Find source and target nodes
+            const sourceNode = nodes.find((n) => n.id === params.source);
+            const targetNode = nodes.find((n) => n.id === params.target);
+
+            if (!sourceNode || !targetNode || !sourceNode.data || !targetNode.data) {
+                connectionStartRef.current = null;
+                return;
+            }
+
+            // Determine actual direction based on where the drag started
+            // Extract field name from handle ID (handle IDs are like "fieldName-left", "fieldName-right", etc.)
+            const getFieldNameFromHandle = (handleId: string) => {
+                // Remove position and type suffixes
+                return handleId.replace(/-left$|-right$|-left-source$|-right-target$/, "");
+            };
+
+            const actualStart = connectionStartRef.current;
+            let actualSourceNode = sourceNode;
+            let actualSourceField = getFieldNameFromHandle(params.sourceHandle);
+            let actualTargetNode = targetNode;
+            let actualTargetField = getFieldNameFromHandle(params.targetHandle);
+
+            // If we have the connection start info, use it to determine actual direction
+            // ReactFlow normalizes connections based on handle types (source→target)
+            // If we didn't start from what ReactFlow calls "source", ReactFlow swapped the direction
+            if (actualStart) {
+                // If the node we started from is NOT what ReactFlow normalized as source,
+                // it means ReactFlow swapped the direction - we need to swap it back
+                if (actualStart.nodeId !== params.source) {
+                    // ReactFlow swapped it - restore actual drag direction
+                    actualSourceNode = targetNode;
+                    actualSourceField = getFieldNameFromHandle(params.targetHandle);
+                    actualTargetNode = sourceNode;
+                    actualTargetField = getFieldNameFromHandle(params.sourceHandle);
+                }
+            }
+
+            // Check if connection already exists (check both directions)
+            const existingEdge = edges.find(
+                (e) =>
+                    (e.source === params.source &&
+                        e.target === params.target &&
+                        e.sourceHandle === params.sourceHandle &&
+                        e.targetHandle === params.targetHandle) ||
+                    (e.source === params.target &&
+                        e.target === params.source &&
+                        e.sourceHandle === params.targetHandle &&
+                        e.targetHandle === params.sourceHandle)
+            );
+
+            if (existingEdge) {
+                connectionStartRef.current = null;
+                return;
+            }
+
+            // Prepare connection info for dialog using actual drag direction
+            const connectionInfo: ConnectionInfo = {
+                sourceModel: actualSourceNode.data.modelName,
+                sourceField: actualSourceField,
+                targetModel: actualTargetNode.data.modelName,
+                targetField: actualTargetField,
+            };
+
+            // Create connection object with actual direction
+            // Use the handles that were actually used in the connection (from params)
+            // but adjust field names based on actual drag direction
+            const actualConnection: Connection = {
+                source: actualSourceNode.id,
+                target: actualTargetNode.id,
+                sourceHandle: params.sourceHandle.includes("-left")
+                    ? `${actualSourceField}-left-source`
+                    : `${actualSourceField}-right`,
+                targetHandle: params.targetHandle.includes("-right")
+                    ? `${actualTargetField}-right-target`
+                    : `${actualTargetField}-left`,
+            };
+
+            // Show dialog instead of immediately adding edge
+            setPendingConnection({
+                connection: actualConnection,
+                connectionInfo,
+            });
+
+            // Clear the connection start ref
+            connectionStartRef.current = null;
+        },
+        [edges, nodes, readonly]
+    );
+
+    const handleRelationSelect = useCallback(
+        (options: RelationOptions) => {
+            console.log("handleRelationSelect called with:", options);
+            console.log("pendingConnection:", pendingConnection);
+            console.log("onSchemaUpdate:", !!onSchemaUpdate);
+            console.log("schemaContent:", schemaContent);
+            console.log("schemaContent length:", schemaContent?.length);
+            console.log("schemaContent type:", typeof schemaContent);
+
+            if (!pendingConnection) {
+                console.warn("Missing pendingConnection");
+                setPendingConnection(null);
+                return;
+            }
+
+            if (!onSchemaUpdate) {
+                console.warn("Missing onSchemaUpdate callback");
+                setPendingConnection(null);
+                return;
+            }
+
+            if (schemaContent === undefined || schemaContent === null || schemaContent.trim() === "") {
+                console.warn("Missing or empty schemaContent:", schemaContent);
+                setPendingConnection(null);
+                return;
+            }
+
+            const { connectionInfo } = pendingConnection;
+            console.log("connectionInfo:", connectionInfo);
+
+            // Add relation to schema
+            const updatedSchema = addRelationToSchema(
+                schemaContent,
+                connectionInfo,
+                options
+            );
+
+            console.log("Updated schema length:", updatedSchema.length);
+            console.log("Schema changed:", updatedSchema !== schemaContent);
+
+            // Update schema through callback
+            onSchemaUpdate(updatedSchema);
+
+            // Close dialog
+            setPendingConnection(null);
+        },
+        [pendingConnection, onSchemaUpdate, schemaContent]
+    );
+
+    const handleRelationCancel = useCallback(() => {
+        setPendingConnection(null);
+    }, []);
+
+    const handleReverseConnection = useCallback(() => {
+        if (!pendingConnection) return;
+
+        // Reverse the connection direction
+        setPendingConnection({
+            connection: {
+                ...pendingConnection.connection,
+                source: pendingConnection.connection.target,
+                target: pendingConnection.connection.source,
+                sourceHandle: pendingConnection.connection.targetHandle,
+                targetHandle: pendingConnection.connection.sourceHandle,
+            },
+            connectionInfo: {
+                sourceModel: pendingConnection.connectionInfo.targetModel,
+                sourceField: pendingConnection.connectionInfo.targetField,
+                targetModel: pendingConnection.connectionInfo.sourceModel,
+                targetField: pendingConnection.connectionInfo.sourceField,
+            },
+        });
+    }, [pendingConnection]);
 
     // Handle undo/redo for diagram only (not editor)
     useEffect(() => {
@@ -532,7 +774,15 @@ export function DiagramCanvas({
                         }
                     }
                 }}
+                onConnectStart={onConnectStart}
                 onConnect={onConnect}
+                isValidConnection={(connection) => {
+                    // Allow connections from source to target (ReactFlow default)
+                    // This ensures we can connect regardless of handle positions
+                    return connection.source !== connection.target &&
+                        connection.sourceHandle !== null &&
+                        connection.targetHandle !== null;
+                }}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 fitView
@@ -547,6 +797,19 @@ export function DiagramCanvas({
                     </div>
                 </Panel>
             </ReactFlow>
+
+            {pendingConnection && (
+                <RelationDialog
+                    open={true}
+                    sourceModel={pendingConnection.connectionInfo.sourceModel}
+                    sourceField={pendingConnection.connectionInfo.sourceField}
+                    targetModel={pendingConnection.connectionInfo.targetModel}
+                    targetField={pendingConnection.connectionInfo.targetField}
+                    onSelect={handleRelationSelect}
+                    onCancel={handleRelationCancel}
+                    onReverse={handleReverseConnection}
+                />
+            )}
         </div>
     );
 }
