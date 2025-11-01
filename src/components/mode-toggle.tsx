@@ -32,7 +32,6 @@ export function ModeToggle() {
     }
 
     if (!themeContext) {
-        console.error('ThemeContext not available after mount!');
         return (
             <Button variant="outline" size="icon" className="h-8 w-8">
                 <Sun className="h-[1.2rem] w-[1.2rem]" />

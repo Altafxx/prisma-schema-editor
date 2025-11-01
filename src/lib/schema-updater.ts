@@ -71,25 +71,11 @@ export function addRelationToSchema(
         // If sourceField exists in source model and ends with "Id" or is Int type, it's likely the FK
         const sourceFieldIsFk = sourceHasFk && (sourceField.endsWith("Id") || sourceField.endsWith("id"));
 
-        console.log("1:1 Relation Debug:", {
-            sourceModel,
-            sourceField,
-            targetModel,
-            targetField,
-            sourceHasFk,
-            targetHasFk,
-            sourceFieldIsFk,
-            targetFieldNameSingular,
-            sourceFieldNameSingular,
-        });
-
         if (sourceFieldIsFk || (!targetHasFk && sourceField.endsWith("Id"))) {
             // Foreign key is on source model (e.g., Post.categoryId)
             // For 1:1 with FK on one side only, only add relation on the side with FK
             // No relation name needed (only needed when multiple relations exist between same models)
             // Target model doesn't get an inverse relation field
-
-            console.log(`Adding relation to ${sourceModel}: ${targetFieldNameSingular} ${targetModel} with fields [${sourceField}] references [${targetField}]`);
 
             updatedSchema = addFieldToModel(
                 updatedSchema,
@@ -354,7 +340,6 @@ function addFieldToModel(
     const model = models.find((m) => m.name === modelName);
 
     if (!model) {
-        console.warn(`Model ${modelName} not found`);
         return schemaContent;
     }
 
@@ -362,27 +347,19 @@ function addFieldToModel(
     const modelBody = schemaContent.substring(model.startPos, model.endPos);
     const fieldName = fieldDefinition.split(/\s+/)[0];
 
-    console.log(`addFieldToModel: Checking if field "${fieldName}" exists in model "${modelName}"`);
-    console.log(`Model body preview: ${modelBody.substring(0, 200)}`);
-
     // More precise check - if field name already exists as a complete field declaration, skip
     // Check for exact field name match at the start of a line (with proper word boundaries)
     const fieldRegex = new RegExp(`^\\s*${fieldName}\\s+`, 'm');
     if (fieldRegex.test(modelBody)) {
-        console.log(`Field "${fieldName}" already exists in model "${modelName}", updating instead`);
         // Field already exists, update it instead (only if it's not a protected field like 'id')
         // Don't update protected fields like 'id' that might have @id attribute
         if (fieldName === 'id') {
             // Don't replace id fields - they're protected
-            console.log(`Field "${fieldName}" is protected, skipping update`);
             return schemaContent;
         }
         const updated = updateFieldInModel(schemaContent, model, fieldDefinition, attributes);
-        console.log(`Field updated, schema length: ${updated.length} (original: ${schemaContent.length})`);
         return updated;
     }
-
-    console.log(`Field "${fieldName}" does not exist in model "${modelName}", adding new field`);
 
     // Add field before closing brace
     // We'll insert it right before the closing brace of the model
@@ -422,9 +399,6 @@ function addFieldToModel(
     // Add the new field with proper spacing
     updatedModelBody = trimmedBody + `\n${fieldLine}`;
 
-    console.log(`addFieldToModel: Adding field "${fieldName}" to model "${modelName}"`);
-    console.log(`Field line: ${fieldLine}`);
-
     return beforeModel + updatedModelBody + afterModel;
 }
 
@@ -437,10 +411,6 @@ function updateFieldInModel(
     const modelBody = schemaContent.substring(model.startPos, model.endPos);
     const fieldName = fieldDefinition.split(/\s+/)[0];
     const lines = modelBody.split('\n');
-
-    console.log(`updateFieldInModel: Updating field "${fieldName}" in model "${model.name}"`);
-    console.log(`Field definition: ${fieldDefinition}`);
-    console.log(`Attributes: ${attributes}`);
 
     // Find the line with the field
     let found = false;
@@ -458,18 +428,13 @@ function updateFieldInModel(
                 newFieldLine += ` ${attributes}`;
             }
 
-            console.log(`Found existing field at line ${i}: "${line.trim()}"`);
-            console.log(`Replacing with: "${newFieldLine}"`);
-
             lines[i] = newFieldLine;
             found = true;
             break;
         }
     }
 
-    if (!found) {
-        console.warn(`Field "${fieldName}" not found in model "${model.name}" - this shouldn't happen`);
-    }
+    // Field should have been found, but if not, continue anyway
 
     // Join lines and ensure model body ends properly (no trailing whitespace)
     let updatedModelBody = lines.join('\n').replace(/\s+$/, '');
@@ -499,7 +464,6 @@ function makeFieldOptional(
     const model = models.find((m) => m.name === modelName);
 
     if (!model) {
-        console.warn(`Model ${modelName} not found`);
         return schemaContent;
     }
 
@@ -525,7 +489,6 @@ function makeFieldOptional(
 
             // If already optional, don't do anything
             if (optionalMarker === '?') {
-                console.log(`Field "${fieldName}" is already optional`);
                 return schemaContent;
             }
 
@@ -537,8 +500,6 @@ function makeFieldOptional(
             const attributes = rest ? rest.trim() : '';
 
             const newFieldLine = `${indent}${fieldName} ${type}?${attributes ? ' ' + attributes : ''}`;
-
-            console.log(`Making field "${fieldName}" optional: "${trimmedLine}" -> "${newFieldLine.trim()}"`);
 
             lines[i] = newFieldLine;
 
@@ -559,7 +520,6 @@ function makeFieldOptional(
         }
     }
 
-    console.warn(`Field "${fieldName}" not found in model "${modelName}"`);
     return schemaContent;
 }
 

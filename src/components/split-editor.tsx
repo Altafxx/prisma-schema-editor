@@ -301,25 +301,14 @@ export function SplitEditor() {
                                     // because addRelationToSchema needs to work on a single file
                                     const mainFile = schemaFiles.find((f) => f.isMain);
                                     const content = mainFile?.content || getMergedSchema();
-                                    console.log("DiagramCanvas schemaContent (memoized):", {
-                                        hasMainFile: !!mainFile,
-                                        mainFileName: mainFile?.name,
-                                        contentLength: content?.length,
-                                        contentPreview: content?.substring(0, 100)
-                                    });
                                     return content;
                                 }, [schemaFiles])}
                                 onNodesChange={handleDiagramNodesChange}
                                 onEdgesChange={handleDiagramEdgesChange}
                                 readonly={false}
                                 onSchemaUpdate={(updatedSchema) => {
-                                    console.log("onSchemaUpdate called in split-editor");
-                                    console.log("Updated schema length:", updatedSchema.length);
-                                    console.log("Updated schema preview:", updatedSchema.substring(0, 300));
-
                                     // Update the main schema file with the new relation
                                     const mainFile = schemaFiles.find((f) => f.isMain);
-                                    console.log("Main file:", mainFile?.name);
 
                                     if (mainFile) {
                                         // updatedSchema should already be just the main file content
@@ -329,12 +318,10 @@ export function SplitEditor() {
                                         isUpdatingFromDiagramRef.current = true;
 
                                         // Update the schema file in the store
-                                        console.log("Updating schema file:", mainFile.name);
                                         updateSchemaFile(mainFile.name, updatedSchema);
 
                                         // Update the editor if it's currently showing the main file
                                         if (editorRef.current && activeFileId === mainFile.name) {
-                                            console.log("Updating editor with new schema");
                                             editorRef.current.setValue(updatedSchema);
                                         }
 
@@ -344,9 +331,7 @@ export function SplitEditor() {
                                             const parsed = parsePrismaSchema(mergedSchema);
                                             setParsedSchema(parsed);
                                             setError(null);
-                                            console.log("Schema re-parsed successfully, models:", parsed.models.length);
                                         } catch (err) {
-                                            console.error("Failed to parse updated schema:", err);
                                             setError(err instanceof Error ? err.message : "Failed to parse schema");
                                         }
 
@@ -354,8 +339,6 @@ export function SplitEditor() {
                                         setTimeout(() => {
                                             isUpdatingFromDiagramRef.current = false;
                                         }, 200);
-                                    } else {
-                                        console.warn("No main file found to update");
                                     }
                                 }}
                             />

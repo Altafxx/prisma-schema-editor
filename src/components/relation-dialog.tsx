@@ -63,7 +63,6 @@ export function RelationDialog({
     };
 
     const handleConfirm = () => {
-        console.log("RelationDialog handleConfirm called", { selectedType, selectedMode, junctionOrder });
         if (selectedType) {
             const options: RelationOptions = {
                 type: selectedType,
@@ -88,10 +87,7 @@ export function RelationDialog({
                 }
             }
 
-            console.log("Calling onSelect with:", options);
             onSelect(options);
-        } else {
-            console.warn("No relation type selected");
         }
     };
 

@@ -85,7 +85,6 @@ const loadSavedSchema = (): { schemaFiles: SchemaFile[]; activeFileId: string | 
         }
       }
     } catch (error) {
-      console.error("Failed to load saved schema:", error);
     }
   }
   // Default schema
@@ -232,7 +231,6 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
         };
         localStorage.setItem("prisma-schema-data", JSON.stringify(dataToSave));
       } catch (error) {
-        console.error("Failed to save schema:", error);
       }
     }
   },
@@ -253,7 +251,6 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
           }
         }
       } catch (error) {
-        console.error("Failed to load schema:", error);
       }
     }
     return false;

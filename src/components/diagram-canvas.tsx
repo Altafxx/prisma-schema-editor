@@ -404,7 +404,6 @@ export function DiagramCanvas({
                     externalOnEdgesChange(layoutedEdges);
                 }
             } catch (error) {
-                console.error("Error rendering diagram:", error);
                 setNodes([]);
                 setEdges([]);
                 lastSaveRef.current = null;
@@ -537,33 +536,22 @@ export function DiagramCanvas({
 
     const handleRelationSelect = useCallback(
         (options: RelationOptions) => {
-            console.log("handleRelationSelect called with:", options);
-            console.log("pendingConnection:", pendingConnection);
-            console.log("onSchemaUpdate:", !!onSchemaUpdate);
-            console.log("schemaContent:", schemaContent);
-            console.log("schemaContent length:", schemaContent?.length);
-            console.log("schemaContent type:", typeof schemaContent);
-
             if (!pendingConnection) {
-                console.warn("Missing pendingConnection");
                 setPendingConnection(null);
                 return;
             }
 
             if (!onSchemaUpdate) {
-                console.warn("Missing onSchemaUpdate callback");
                 setPendingConnection(null);
                 return;
             }
 
             if (schemaContent === undefined || schemaContent === null || schemaContent.trim() === "") {
-                console.warn("Missing or empty schemaContent:", schemaContent);
                 setPendingConnection(null);
                 return;
             }
 
             const { connectionInfo } = pendingConnection;
-            console.log("connectionInfo:", connectionInfo);
 
             // Add relation to schema
             const updatedSchema = addRelationToSchema(
@@ -571,9 +559,6 @@ export function DiagramCanvas({
                 connectionInfo,
                 options
             );
-
-            console.log("Updated schema length:", updatedSchema.length);
-            console.log("Schema changed:", updatedSchema !== schemaContent);
 
             // Update schema through callback
             onSchemaUpdate(updatedSchema);
