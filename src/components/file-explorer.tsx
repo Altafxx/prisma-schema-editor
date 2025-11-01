@@ -1,0 +1,261 @@
+"use client";
+
+import { useState } from "react";
+import { useSchemaStore } from "@/store/schema-store";
+
+export function FileExplorer() {
+    const {
+        schemaFiles,
+        activeFileId,
+        setActiveFile,
+        addSchemaFile,
+        deleteSchemaFile,
+        renameSchemaFile,
+    } = useSchemaStore();
+
+    const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
+    const [newFileName, setNewFileName] = useState("");
+    const [showAddFile, setShowAddFile] = useState(false);
+    const [newFileInput, setNewFileInput] = useState("");
+
+    const handleAddFile = () => {
+        const fileName = newFileInput.trim();
+        if (!fileName) return;
+
+        // Ensure .prisma extension
+        const finalName = fileName.endsWith(".prisma")
+            ? fileName
+            : `${fileName}.prisma`;
+
+        // Check if file already exists
+        if (schemaFiles.some((f) => f.name === finalName)) {
+            alert("File already exists");
+            return;
+        }
+
+        addSchemaFile({
+            name: finalName,
+            content: "",
+            isMain: false,
+        });
+
+        setNewFileInput("");
+        setShowAddFile(false);
+    };
+
+    const handleDeleteFile = (fileId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirm(`Delete ${fileId}?`)) {
+            deleteSchemaFile(fileId);
+        }
+    };
+
+    const handleStartRename = (fileId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRenamingFileId(fileId);
+        setNewFileName(fileId);
+    };
+
+    const handleFinishRename = (fileId: string) => {
+        if (!newFileName.trim()) {
+            setRenamingFileId(null);
+            return;
+        }
+
+        const finalName = newFileName.endsWith(".prisma")
+            ? newFileName
+            : `${newFileName}.prisma`;
+
+        renameSchemaFile(fileId, finalName);
+        setRenamingFileId(null);
+        setNewFileName("");
+    };
+
+    const mainFile = schemaFiles.find((f) => f.isMain);
+    const otherFiles = schemaFiles.filter((f) => !f.isMain);
+
+    return (
+        <div className="w-64 border-r border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 flex flex-col">
+            <div className="px-3 py-2 border-b border-zinc-300 dark:border-zinc-700 flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
+                    Schema Files
+                </h3>
+                <button
+                    onClick={() => setShowAddFile(true)}
+                    className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm px-1.5 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                    title="Add new file"
+                >
+                    +
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-2">
+                {/* Main file */}
+                {mainFile && (
+                    <div>
+                        <div className="px-3 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                            Main
+                        </div>
+                        <FileItem
+                            file={mainFile}
+                            isActive={activeFileId === mainFile.name}
+                            onClick={() => setActiveFile(mainFile.name)}
+                            onRename={(e) => handleStartRename(mainFile.name, e)}
+                            onDelete={(e) => handleDeleteFile(mainFile.name, e)}
+                            isRenaming={renamingFileId === mainFile.name}
+                            newFileName={newFileName}
+                            setNewFileName={setNewFileName}
+                            onFinishRename={() => handleFinishRename(mainFile.name)}
+                            canDelete={false}
+                        />
+                    </div>
+                )}
+
+                {/* Other files */}
+                {otherFiles.length > 0 && (
+                    <div className="mt-4">
+                        <div className="px-3 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                            Models
+                        </div>
+                        {otherFiles.map((file) => (
+                            <FileItem
+                                key={file.name}
+                                file={file}
+                                isActive={activeFileId === file.name}
+                                onClick={() => setActiveFile(file.name)}
+                                onRename={(e) => handleStartRename(file.name, e)}
+                                onDelete={(e) => handleDeleteFile(file.name, e)}
+                                isRenaming={renamingFileId === file.name}
+                                newFileName={newFileName}
+                                setNewFileName={setNewFileName}
+                                onFinishRename={() => handleFinishRename(file.name)}
+                                canDelete={true}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Add file input */}
+                {showAddFile && (
+                    <div className="px-3 py-2 border-t border-zinc-300 dark:border-zinc-700">
+                        <input
+                            type="text"
+                            value={newFileInput}
+                            onChange={(e) => setNewFileInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleAddFile();
+                                } else if (e.key === "Escape") {
+                                    setShowAddFile(false);
+                                    setNewFileInput("");
+                                }
+                            }}
+                            placeholder="file.prisma"
+                            className="w-full px-2 py-1 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100"
+                            autoFocus
+                        />
+                        <div className="flex gap-1 mt-1">
+                            <button
+                                onClick={handleAddFile}
+                                className="text-xs px-2 py-0.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            >
+                                Add
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowAddFile(false);
+                                    setNewFileInput("");
+                                }}
+                                className="text-xs px-2 py-0.5 bg-zinc-300 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded hover:bg-zinc-400 dark:hover:bg-zinc-600"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+interface FileItemProps {
+    file: { name: string; content: string; isMain: boolean };
+    isActive: boolean;
+    onClick: () => void;
+    onRename: (e: React.MouseEvent) => void;
+    onDelete: (e: React.MouseEvent) => void;
+    isRenaming: boolean;
+    newFileName: string;
+    setNewFileName: (name: string) => void;
+    onFinishRename: () => void;
+    canDelete: boolean;
+}
+
+function FileItem({
+    file,
+    isActive,
+    onClick,
+    onRename,
+    onDelete,
+    isRenaming,
+    newFileName,
+    setNewFileName,
+    onFinishRename,
+    canDelete,
+}: FileItemProps) {
+    if (isRenaming) {
+        return (
+            <div className="px-3 py-1">
+                <input
+                    type="text"
+                    value={newFileName}
+                    onChange={(e) => setNewFileName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            onFinishRename();
+                        } else if (e.key === "Escape") {
+                            setNewFileName(file.name);
+                            onFinishRename();
+                        }
+                    }}
+                    onBlur={onFinishRename}
+                    className="w-full px-2 py-0.5 text-sm bg-white dark:bg-zinc-900 border border-blue-500 rounded text-zinc-900 dark:text-zinc-100"
+                    autoFocus
+                />
+            </div>
+        );
+    }
+
+    return (
+        <div
+            className={`px-3 py-1.5 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group flex items-center justify-between ${isActive
+                    ? "bg-blue-100 dark:bg-blue-900/30 border-l-2 border-blue-500"
+                    : ""
+                }`}
+            onClick={onClick}
+        >
+            <span className="text-sm text-zinc-900 dark:text-zinc-100 truncate flex-1">
+                {file.name}
+            </span>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                <button
+                    onClick={onRename}
+                    className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-xs px-1"
+                    title="Rename"
+                >
+                    ✎
+                </button>
+                {canDelete && (
+                    <button
+                        onClick={onDelete}
+                        className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 text-xs px-1"
+                        title="Delete"
+                    >
+                        ×
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
+
