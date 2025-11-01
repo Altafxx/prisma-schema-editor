@@ -37,6 +37,10 @@ interface SchemaStore {
 
   // Helper to get merged schema text
   getMergedSchema: () => string;
+
+  // Save/Load functions
+  saveSchema: () => void;
+  loadSchema: () => void;
 }
 
 const defaultSchemaContent = `generator client {
@@ -66,19 +70,46 @@ model Post {
   createdAt  DateTime @default(now())
 }`;
 
+// Load saved schema on initialization
+const loadSavedSchema = (): { schemaFiles: SchemaFile[]; activeFileId: string | null } => {
+  if (typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("prisma-schema-data");
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.schemaFiles && Array.isArray(data.schemaFiles) && data.schemaFiles.length > 0) {
+          return {
+            schemaFiles: data.schemaFiles,
+            activeFileId: data.activeFileId || data.schemaFiles[0]?.name || null,
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load saved schema:", error);
+    }
+  }
+  // Default schema
+  return {
+    schemaFiles: [
+      {
+        name: "schema.prisma",
+        content: defaultSchemaContent,
+        isMain: true,
+      },
+    ],
+    activeFileId: "schema.prisma",
+  };
+};
+
+const initialData = loadSavedSchema();
+
 export const useSchemaStore = create<SchemaStore>((set, get) => ({
   // Legacy support
-  schemaText: defaultSchemaContent,
+  schemaText: initialData.schemaFiles.find((f) => f.isMain)?.content || defaultSchemaContent,
 
-  // Multi-file support - initialize with default schema
-  schemaFiles: [
-    {
-      name: "schema.prisma",
-      content: defaultSchemaContent,
-      isMain: true,
-    },
-  ],
-  activeFileId: "schema.prisma",
+  // Multi-file support - initialize with saved schema or default
+  schemaFiles: initialData.schemaFiles,
+  activeFileId: initialData.activeFileId,
 
   parsedSchema: null,
   error: null,
@@ -187,6 +218,45 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
     });
 
     return parts.join("\n\n");
+  },
+
+  // Save schema files to localStorage
+  saveSchema: () => {
+    const state = get();
+    if (typeof window !== "undefined") {
+      try {
+        const dataToSave = {
+          schemaFiles: state.schemaFiles,
+          activeFileId: state.activeFileId,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem("prisma-schema-data", JSON.stringify(dataToSave));
+      } catch (error) {
+        console.error("Failed to save schema:", error);
+      }
+    }
+  },
+
+  // Load schema files from localStorage
+  loadSchema: () => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("prisma-schema-data");
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data.schemaFiles && Array.isArray(data.schemaFiles)) {
+            set({
+              schemaFiles: data.schemaFiles,
+              activeFileId: data.activeFileId || data.schemaFiles[0]?.name || null,
+            });
+            return true;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load schema:", error);
+      }
+    }
+    return false;
   },
 }));
 

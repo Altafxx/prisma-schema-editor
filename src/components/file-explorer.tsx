@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { useSchemaStore } from "@/store/schema-store";
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarHeader,
+    SidebarProvider,
+    SidebarTrigger,
+    useSidebar,
+} from "@/components/ui/sidebar";
 
 export function FileExplorer() {
     const {
@@ -75,106 +83,183 @@ export function FileExplorer() {
     const otherFiles = schemaFiles.filter((f) => !f.isMain);
 
     return (
-        <div className="w-64 border-r border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 flex flex-col">
-            <div className="px-3 py-2 border-b border-zinc-300 dark:border-zinc-700 flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
-                    Schema Files
-                </h3>
-                <button
-                    onClick={() => setShowAddFile(true)}
-                    className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm px-1.5 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800"
-                    title="Add new file"
-                >
-                    +
-                </button>
-            </div>
+        <SidebarProvider defaultOpen={true}>
+            <SidebarWrapper
+                mainFile={mainFile}
+                otherFiles={otherFiles}
+                activeFileId={activeFileId}
+                setActiveFile={setActiveFile}
+                onStartRename={handleStartRename}
+                onFinishRename={handleFinishRename}
+                onDelete={handleDeleteFile}
+                renamingFileId={renamingFileId}
+                newFileName={newFileName}
+                setNewFileName={setNewFileName}
+                showAddFile={showAddFile}
+                setShowAddFile={setShowAddFile}
+                newFileInput={newFileInput}
+                setNewFileInput={setNewFileInput}
+                onAddFile={handleAddFile}
+            />
+        </SidebarProvider>
+    );
+}
 
-            <div className="flex-1 overflow-y-auto py-2">
-                {/* Main file */}
-                {mainFile && (
-                    <div>
-                        <div className="px-3 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                            Main
-                        </div>
-                        <FileItem
-                            file={mainFile}
-                            isActive={activeFileId === mainFile.name}
-                            onClick={() => setActiveFile(mainFile.name)}
-                            onRename={(e) => handleStartRename(mainFile.name, e)}
-                            onDelete={(e) => handleDeleteFile(mainFile.name, e)}
-                            isRenaming={renamingFileId === mainFile.name}
-                            newFileName={newFileName}
-                            setNewFileName={setNewFileName}
-                            onFinishRename={() => handleFinishRename(mainFile.name)}
-                            canDelete={false}
-                        />
-                    </div>
-                )}
+interface SidebarWrapperProps {
+    mainFile?: { name: string; content: string; isMain: boolean };
+    otherFiles: Array<{ name: string; content: string; isMain: boolean }>;
+    activeFileId: string | null;
+    setActiveFile: (fileId: string) => void;
+    onStartRename: (fileId: string, e: React.MouseEvent) => void;
+    onFinishRename: (fileId: string) => void;
+    onDelete: (fileId: string, e: React.MouseEvent) => void;
+    renamingFileId: string | null;
+    newFileName: string;
+    setNewFileName: (name: string) => void;
+    showAddFile: boolean;
+    setShowAddFile: (show: boolean) => void;
+    newFileInput: string;
+    setNewFileInput: (input: string) => void;
+    onAddFile: () => void;
+}
 
-                {/* Other files */}
-                {otherFiles.length > 0 && (
-                    <div className="mt-4">
-                        <div className="px-3 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                            Models
-                        </div>
-                        {otherFiles.map((file) => (
-                            <FileItem
-                                key={file.name}
-                                file={file}
-                                isActive={activeFileId === file.name}
-                                onClick={() => setActiveFile(file.name)}
-                                onRename={(e) => handleStartRename(file.name, e)}
-                                onDelete={(e) => handleDeleteFile(file.name, e)}
-                                isRenaming={renamingFileId === file.name}
-                                newFileName={newFileName}
-                                setNewFileName={setNewFileName}
-                                onFinishRename={() => handleFinishRename(file.name)}
-                                canDelete={true}
-                            />
-                        ))}
-                    </div>
-                )}
+function SidebarWrapper({
+    mainFile,
+    otherFiles,
+    activeFileId,
+    setActiveFile,
+    onStartRename,
+    onFinishRename,
+    onDelete,
+    renamingFileId,
+    newFileName,
+    setNewFileName,
+    showAddFile,
+    setShowAddFile,
+    newFileInput,
+    setNewFileInput,
+    onAddFile,
+}: SidebarWrapperProps) {
+    const { open } = useSidebar();
 
-                {/* Add file input */}
-                {showAddFile && (
-                    <div className="px-3 py-2 border-t border-zinc-300 dark:border-zinc-700">
-                        <input
-                            type="text"
-                            value={newFileInput}
-                            onChange={(e) => setNewFileInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    handleAddFile();
-                                } else if (e.key === "Escape") {
-                                    setShowAddFile(false);
-                                    setNewFileInput("");
-                                }
-                            }}
-                            placeholder="file.prisma"
-                            className="w-full px-2 py-1 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100"
-                            autoFocus
-                        />
-                        <div className="flex gap-1 mt-1">
-                            <button
-                                onClick={handleAddFile}
-                                className="text-xs px-2 py-0.5 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            >
-                                Add
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowAddFile(false);
-                                    setNewFileInput("");
-                                }}
-                                className="text-xs px-2 py-0.5 bg-zinc-300 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded hover:bg-zinc-400 dark:hover:bg-zinc-600"
-                            >
-                                Cancel
-                            </button>
-                        </div>
+    return (
+        <>
+            {/* External trigger when collapsed */}
+            {!open && (
+                <div className="flex items-start justify-center border-r border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 pt-2 min-w-12">
+                    <SidebarTrigger />
+                </div>
+            )}
+            <Sidebar
+                side="left"
+                collapsible="offcanvas"
+                className="bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
+            >
+                <SidebarHeader className="justify-between">
+                    <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
+                        Schema Files
+                    </h3>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setShowAddFile(true)}
+                            className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm px-1.5 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                            title="Add new file"
+                        >
+                            +
+                        </button>
+                        {open && <SidebarTrigger />}
                     </div>
-                )}
-            </div>
-        </div>
+                </SidebarHeader>
+
+                <SidebarContent>
+                    <div className="flex-1 overflow-y-auto py-2">
+                        {/* Main file */}
+                        {mainFile && (
+                            <div>
+                                <div className="px-3 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                    Main
+                                </div>
+                                <FileItem
+                                    file={mainFile}
+                                    isActive={activeFileId === mainFile.name}
+                                    onClick={() => setActiveFile(mainFile.name)}
+                                    onRename={(e) => onStartRename(mainFile.name, e)}
+                                    onDelete={(e) => onDelete(mainFile.name, e)}
+                                    isRenaming={renamingFileId === mainFile.name}
+                                    newFileName={newFileName}
+                                    setNewFileName={setNewFileName}
+                                    onFinishRename={() => onFinishRename(mainFile.name)}
+                                    canDelete={false}
+                                />
+                            </div>
+                        )}
+
+                        {/* Other files */}
+                        {otherFiles.length > 0 && (
+                            <div className="mt-4">
+                                <div className="px-3 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                    Models
+                                </div>
+                                {otherFiles.map((file) => (
+                                    <FileItem
+                                        key={file.name}
+                                        file={file}
+                                        isActive={activeFileId === file.name}
+                                        onClick={() => setActiveFile(file.name)}
+                                        onRename={(e) => onStartRename(file.name, e)}
+                                        onDelete={(e) => onDelete(file.name, e)}
+                                        isRenaming={renamingFileId === file.name}
+                                        newFileName={newFileName}
+                                        setNewFileName={setNewFileName}
+                                        onFinishRename={() => onFinishRename(file.name)}
+                                        canDelete={true}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Add file input */}
+                        {showAddFile && (
+                            <div className="px-3 py-2 border-t border-zinc-300 dark:border-zinc-700">
+                                <input
+                                    type="text"
+                                    value={newFileInput}
+                                    onChange={(e) => setNewFileInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            onAddFile();
+                                        } else if (e.key === "Escape") {
+                                            setShowAddFile(false);
+                                            setNewFileInput("");
+                                        }
+                                    }}
+                                    placeholder="file.prisma"
+                                    className="w-full px-2 py-1 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100"
+                                    autoFocus
+                                />
+                                <div className="flex gap-1 mt-1">
+                                    <button
+                                        onClick={onAddFile}
+                                        className="text-xs px-2 py-0.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                    >
+                                        Add
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowAddFile(false);
+                                            setNewFileInput("");
+                                        }}
+                                        className="text-xs px-2 py-0.5 bg-zinc-300 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded hover:bg-zinc-400 dark:hover:bg-zinc-600"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </SidebarContent>
+            </Sidebar>
+        </>
     );
 }
 
@@ -229,8 +314,8 @@ function FileItem({
     return (
         <div
             className={`px-3 py-1.5 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group flex items-center justify-between ${isActive
-                    ? "bg-blue-100 dark:bg-blue-900/30 border-l-2 border-blue-500"
-                    : ""
+                ? "bg-blue-100 dark:bg-blue-900/30 border-l-2 border-blue-500"
+                : ""
                 }`}
             onClick={onClick}
         >

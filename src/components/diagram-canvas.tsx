@@ -435,6 +435,77 @@ export function DiagramCanvas({
         };
     }, [readonly, setNodes, setEdges, externalOnNodesChange, externalOnEdgesChange]);
 
+    // Update ReactFlow Minimap colors for dark mode
+    useEffect(() => {
+        const updateMinimapColors = () => {
+            const isDark = document.documentElement.classList.contains("dark");
+            const minimap = document.querySelector(".react-flow-minimap");
+
+            if (!minimap) return;
+
+            const mask = minimap.querySelector(".react-flow__minimap-mask");
+            const nodes = minimap.querySelectorAll(".react-flow__minimap-node");
+            const svg = minimap.querySelector("svg");
+
+            if (isDark) {
+                // Dark mode colors
+                if (mask) {
+                    mask.setAttribute("fill", "oklch(0.269 0 0)");
+                }
+                if (svg) {
+                    svg.style.backgroundColor = "oklch(0.205 0 0)";
+                }
+                nodes.forEach((node) => {
+                    node.setAttribute("fill", "oklch(0.322 0 0)");
+                    node.setAttribute("stroke", "oklch(0.556 0 0)");
+                });
+            } else {
+                // Light mode - restore defaults or use light colors
+                if (mask) {
+                    mask.setAttribute("fill", "rgba(240, 240, 240, 0.6)");
+                }
+                if (svg) {
+                    svg.style.backgroundColor = "";
+                }
+                nodes.forEach((node) => {
+                    node.setAttribute("fill", "#e2e2e2");
+                    node.setAttribute("stroke", "#b1b1b7");
+                });
+            }
+        };
+
+        // Update immediately
+        updateMinimapColors();
+
+        // Watch for dark mode changes
+        const observer = new MutationObserver(updateMinimapColors);
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"],
+        });
+
+        // Also update when nodes change (minimap re-renders)
+        const minimapElement = document.querySelector(".react-flow-minimap");
+        if (minimapElement) {
+            const minimapObserver = new MutationObserver(() => {
+                setTimeout(updateMinimapColors, 100);
+            });
+            minimapObserver.observe(minimapElement, {
+                childList: true,
+                subtree: true,
+            });
+
+            return () => {
+                observer.disconnect();
+                minimapObserver.disconnect();
+            };
+        }
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [nodes]);
+
     if (!schema || schema.models.length === 0) {
         return (
             <div className="w-full h-full bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
@@ -468,8 +539,8 @@ export function DiagramCanvas({
                 attributionPosition="bottom-left"
             >
                 <Background />
-                <Controls />
-                <MiniMap />
+                <Controls className="react-flow-controls" />
+                <MiniMap className="react-flow-minimap" />
                 <Panel position="top-right" className="bg-white dark:bg-zinc-900 p-2 rounded shadow">
                     <div className="text-xs text-zinc-600 dark:text-zinc-400">
                         {nodes.length} model{nodes.length !== 1 ? "s" : ""}
