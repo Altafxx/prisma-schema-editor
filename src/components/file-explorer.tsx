@@ -183,9 +183,9 @@ function SidebarWrapper({
                 className="bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700 transition-colors duration-200"
             >
                 <SidebarHeader className="justify-between">
-                    <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide transition-colors duration-200">
+                    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-wide transition-colors duration-200">
                         Schema Files
-                    </h3>
+                    </h2>
                     <div className="flex items-center gap-1">
                         <button
                             onClick={() => setShowAddFile(true)}
