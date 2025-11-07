@@ -22,11 +22,7 @@ export interface SidebarWrapperProps {
     renamingFileId: string | null;
     newFileName: string;
     setNewFileName: (name: string) => void;
-    showAddFile: boolean;
-    setShowAddFile: (show: boolean) => void;
-    newFileInput: string;
-    setNewFileInput: (input: string) => void;
-    onAddFile: () => void;
+    onCreateFile: () => void;
     onImport: () => void;
     onExport: () => void;
     onSettings: () => void;
@@ -44,11 +40,7 @@ export function SidebarWrapper({
     renamingFileId,
     newFileName,
     setNewFileName,
-    showAddFile,
-    setShowAddFile,
-    newFileInput,
-    setNewFileInput,
-    onAddFile,
+    onCreateFile,
     onImport,
     onExport,
     onSettings,
@@ -72,7 +64,7 @@ export function SidebarWrapper({
                             </h2>
                         </div>
                         <Button
-                            onClick={() => setShowAddFile(true)}
+                            onClick={onCreateFile}
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 shrink-0"
@@ -128,48 +120,6 @@ export function SidebarWrapper({
                                     canDelete={true}
                                 />
                             ))}
-                        </div>
-                    )}
-
-                    {/* Add file input */}
-                    {showAddFile && (
-                        <div className="px-3 py-2 border-t border-zinc-300 dark:border-zinc-700">
-                            <input
-                                type="text"
-                                value={newFileInput}
-                                onChange={(e) => setNewFileInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        onAddFile();
-                                    } else if (e.key === "Escape") {
-                                        setShowAddFile(false);
-                                        setNewFileInput("");
-                                    }
-                                }}
-                                placeholder={defaultFileName}
-                                className="w-full px-2 py-1 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100"
-                                autoFocus
-                            />
-                            <div className="flex gap-1 mt-1">
-                                <Button
-                                    onClick={onAddFile}
-                                    size="sm"
-                                    className="text-xs px-2 py-0.5 h-auto"
-                                >
-                                    Add
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setShowAddFile(false);
-                                        setNewFileInput("");
-                                    }}
-                                    variant="secondary"
-                                    size="sm"
-                                    className="text-xs px-2 py-0.5 h-auto"
-                                >
-                                    Cancel
-                                </Button>
-                            </div>
                         </div>
                     )}
                 </div>

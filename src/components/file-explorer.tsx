@@ -7,6 +7,7 @@ import { ImportDialog } from "./import-dialog";
 import { ExportDialog } from "./export-dialog";
 import { SettingsDialog } from "./settings-dialog";
 import { DeleteDialog } from "./delete-dialog";
+import { CreateFileDialog } from "./create-file-dialog";
 import { useSettingsStore } from "@/store/settings-store";
 import { SidebarWrapper } from "./sidebar-wrapper";
 
@@ -23,37 +24,19 @@ export function FileExplorer() {
 
     const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
     const [newFileName, setNewFileName] = useState("");
-    const [showAddFile, setShowAddFile] = useState(false);
-    const [newFileInput, setNewFileInput] = useState("");
     const [showImportDialog, setShowImportDialog] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [showSettingsDialog, setShowSettingsDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showCreateFileDialog, setShowCreateFileDialog] = useState(false);
     const [fileToDelete, setFileToDelete] = useState<string | null>(null);
 
-    const handleAddFile = () => {
-        const fileName = newFileInput.trim();
-        if (!fileName) return;
-
-        // Ensure .prisma extension
-        const finalName = fileName.endsWith(".prisma")
-            ? fileName
-            : `${fileName}.prisma`;
-
-        // Check if file already exists
-        if (schemaFiles.some((f) => f.name === finalName)) {
-            alert("File already exists");
-            return;
-        }
-
+    const handleCreateFile = (fileName: string) => {
         addSchemaFile({
-            name: finalName,
+            name: fileName,
             content: "",
             isMain: false,
         });
-
-        setNewFileInput("");
-        setShowAddFile(false);
     };
 
     const handleDeleteFile = (fileId: string, e: React.MouseEvent) => {
@@ -107,11 +90,7 @@ export function FileExplorer() {
                     renamingFileId={renamingFileId}
                     newFileName={newFileName}
                     setNewFileName={setNewFileName}
-                    showAddFile={showAddFile}
-                    setShowAddFile={setShowAddFile}
-                    newFileInput={newFileInput}
-                    setNewFileInput={setNewFileInput}
-                    onAddFile={handleAddFile}
+                    onCreateFile={() => setShowCreateFileDialog(true)}
                     onImport={() => setShowImportDialog(true)}
                     onExport={() => setShowExportDialog(true)}
                     onSettings={() => setShowSettingsDialog(true)}
@@ -129,6 +108,13 @@ export function FileExplorer() {
                 }}
                 onConfirm={handleConfirmDelete}
                 filename={fileToDelete || ""}
+            />
+            <CreateFileDialog
+                open={showCreateFileDialog}
+                onClose={() => setShowCreateFileDialog(false)}
+                onConfirm={handleCreateFile}
+                defaultFileName={defaultFileName}
+                existingFiles={schemaFiles.map((f) => f.name)}
             />
         </>
     );
