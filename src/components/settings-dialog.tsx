@@ -45,6 +45,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     const [defaultRelationMode, setDefaultRelationMode] = React.useState<RelationMode>(settings.defaultRelationMode);
     const [gridPattern, setGridPattern] = React.useState<GridPattern>(settings.gridPattern);
     const [gridOpacity, setGridOpacity] = React.useState(settings.gridOpacity);
+    const [hideExtension, setHideExtension] = React.useState(settings.hideExtension);
 
     // Split filenames into name and extension
     const fileNameParts = React.useMemo(() => splitFilename(defaultFileName, ".prisma"), [defaultFileName]);
@@ -64,6 +65,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             setDefaultRelationMode(settings.defaultRelationMode);
             setGridPattern(settings.gridPattern);
             setGridOpacity(settings.gridOpacity);
+            setHideExtension(settings.hideExtension);
         }
     }, [open, settings]);
 
@@ -93,6 +95,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             defaultRelationMode,
             gridPattern,
             gridOpacity,
+            hideExtension,
         });
 
         // Update theme if it changed
@@ -335,6 +338,25 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                             </div>
                         </div>
                     )}
+
+                    {/* Hide Extension */}
+                    <div>
+                        <div className="flex items-start space-x-2">
+                            <input
+                                type="checkbox"
+                                id="hide-extension"
+                                checked={hideExtension}
+                                onChange={(e) => setHideExtension(e.target.checked)}
+                                className="mt-0.5 h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 dark:checked:bg-blue-600"
+                            />
+                            <Label htmlFor="hide-extension" className="cursor-pointer flex-1">
+                                <span className="font-medium block">Hide File Extensions</span>
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400 block transition-colors duration-200">
+                                    Hide file extensions in the sidebar (extensions are shown at 50% opacity by default)
+                                </span>
+                            </Label>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">

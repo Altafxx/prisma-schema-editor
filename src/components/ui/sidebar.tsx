@@ -71,10 +71,12 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                 ref={ref}
                 data-state={open ? "expanded" : "collapsed"}
                 className={cn(
-                    "flex flex-col transition-all duration-200",
+                    "flex flex-col transition-all duration-300 ease-in-out",
                     side === "left" ? "border-r" : "border-l",
                     collapsible === "offcanvas" && !open && "w-0 min-w-0 overflow-hidden",
                     collapsible === "offcanvas" && open && "w-64",
+                    collapsible === "icon" && !open && "w-16",
+                    collapsible === "icon" && open && "w-64",
                     className
                 )}
                 {...props}
@@ -126,43 +128,50 @@ const SidebarTrigger = React.forwardRef<HTMLButtonElement, SidebarTriggerProps>(
                 ref={ref}
                 onClick={toggle}
                 className={cn(
-                    "inline-flex items-center justify-center rounded-md p-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+                    "relative inline-flex items-center justify-center rounded-md p-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
                     className
                 )}
                 {...props}
             >
-                {open ? (
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M18 6L6 18" />
-                        <path d="M6 6l12 12" />
-                    </svg>
-                ) : (
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M3 12h18" />
-                        <path d="M3 6h18" />
-                        <path d="M3 18h18" />
-                    </svg>
-                )}
+                {/* Close icon (X) */}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={cn(
+                        "absolute transition-all duration-300 ease-in-out",
+                        open ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-0"
+                    )}
+                >
+                    <path d="M18 6L6 18" />
+                    <path d="M6 6l12 12" />
+                </svg>
+                {/* Hamburger icon */}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={cn(
+                        "absolute transition-all duration-300 ease-in-out",
+                        open ? "opacity-0 -rotate-90 scale-0" : "opacity-100 rotate-0 scale-100"
+                    )}
+                >
+                    <path d="M3 12h18" />
+                    <path d="M3 6h18" />
+                    <path d="M3 18h18" />
+                </svg>
             </button>
         )
     }

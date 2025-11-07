@@ -12,6 +12,7 @@ export interface Settings {
     defaultRelationMode: RelationMode;
     gridPattern: GridPattern;
     gridOpacity: number;
+    hideExtension: boolean;
 }
 
 interface SettingsStore {
@@ -27,6 +28,7 @@ const defaultSettings: Settings = {
     defaultRelationMode: "implicit",
     gridPattern: "dots",
     gridOpacity: 0.5,
+    hideExtension: false,
 };
 
 export const useSettingsStore = create<SettingsStore>()(
