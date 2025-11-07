@@ -26,6 +26,7 @@ import { useSettingsStore } from "@/store/settings-store";
 import { useTheme } from "next-themes";
 import type { Theme, GridPattern } from "@/store/settings-store";
 import type { RelationMode } from "./relation-dialog";
+import { toast } from "sonner";
 
 // Fix for displayName error - assign displayName to Slider component
 if (typeof Slider !== "undefined" && !(Slider as any).displayName) {
@@ -113,7 +114,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         });
 
         // Update theme if it changed
-        if (theme !== currentTheme && mounted) {
+        const themeChanged = theme !== currentTheme;
+        if (themeChanged && mounted) {
             // Use the same theme handling logic from mode-toggle
             if (typeof window !== "undefined") {
                 localStorage.setItem("theme", theme);
@@ -134,6 +136,22 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 }
             }
             setNextTheme(theme);
+        }
+
+        // Show toast notification
+        if (themeChanged) {
+            const themeLabels: Record<string, string> = {
+                light: "Light",
+                dark: "Dark",
+                system: "System",
+            };
+            toast.success("Theme changed", {
+                description: `Theme set to ${themeLabels[theme] || theme}.`,
+            });
+        } else {
+            toast.success("Settings saved", {
+                description: "Your settings have been saved successfully.",
+            });
         }
 
         onClose();

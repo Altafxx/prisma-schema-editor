@@ -23,6 +23,7 @@ import {
 import { useSchemaStore } from "@/store/schema-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { createZipFromFiles, downloadFile } from "@/lib/file-utils";
+import { toast } from "sonner";
 
 interface ExportDialogProps {
     open: boolean;
@@ -106,10 +107,19 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                 downloadFile(blob, prismaFilename);
             }
 
+            // Show success toast
+            toast.success("Export successful", {
+                description: `File${hasMultipleFiles ? "s" : ""} exported successfully.`,
+            });
+
             // Close dialog on success
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to export files");
+            const errorMessage = err instanceof Error ? err.message : "Failed to export files";
+            setError(errorMessage);
+            toast.error("Export failed", {
+                description: errorMessage,
+            });
         } finally {
             setIsExporting(false);
         }

@@ -18,6 +18,7 @@ interface SchemaStore {
   parsedSchema: ParsedPrismaSchema | null;
   error: string | null;
   isSyncing: boolean;
+  wasLoadedFromStorage: boolean; // Track if data was loaded from localStorage
 
   // Legacy setters
   setSchemaText: (text: string) => void;
@@ -75,7 +76,7 @@ model Post {
 }`;
 
 // Load saved schema on initialization
-const loadSavedSchema = (): { schemaFiles: SchemaFile[]; activeFileId: string | null } => {
+const loadSavedSchema = (): { schemaFiles: SchemaFile[]; activeFileId: string | null; wasLoaded: boolean } => {
   if (typeof window !== "undefined") {
     try {
       const saved = localStorage.getItem("prisma-schema-data");
@@ -85,6 +86,7 @@ const loadSavedSchema = (): { schemaFiles: SchemaFile[]; activeFileId: string | 
           return {
             schemaFiles: data.schemaFiles,
             activeFileId: data.activeFileId || data.schemaFiles[0]?.name || null,
+            wasLoaded: true,
           };
         }
       }
@@ -101,6 +103,7 @@ const loadSavedSchema = (): { schemaFiles: SchemaFile[]; activeFileId: string | 
       },
     ],
     activeFileId: "schema.prisma",
+    wasLoaded: false,
   };
 };
 
@@ -117,6 +120,7 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
   parsedSchema: null,
   error: null,
   isSyncing: false,
+  wasLoadedFromStorage: initialData.wasLoaded,
 
   // Legacy setter - updates main file
   setSchemaText: (text) => {

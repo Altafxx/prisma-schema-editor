@@ -16,6 +16,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 export function SplitEditor() {
     const {
@@ -28,6 +29,7 @@ export function SplitEditor() {
         setParsedSchema,
         setError,
         saveSchema,
+        wasLoadedFromStorage,
     } = useSchemaStore();
 
     const { theme, resolvedTheme } = useTheme();
@@ -49,6 +51,21 @@ export function SplitEditor() {
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isUpdatingFromDiagramRef = useRef(false);
     const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Check if saved content was loaded and show toast
+    const hasShownLoadToast = useRef(false);
+    useEffect(() => {
+        if (wasLoadedFromStorage && !hasShownLoadToast.current && schemaFiles.length > 0) {
+            // Use setTimeout to ensure toast system is ready after hydration
+            const timer = setTimeout(() => {
+                toast.success("Content loaded from last save", {
+                    description: `Loaded ${schemaFiles.length} file${schemaFiles.length > 1 ? 's' : ''}`,
+                });
+                hasShownLoadToast.current = true;
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [wasLoadedFromStorage, schemaFiles.length]);
 
     // Initialize schema on mount
     useEffect(() => {
@@ -112,6 +129,9 @@ export function SplitEditor() {
         setIsSaving(true);
         saveSchema();
         lastSaveRef.current = Date.now();
+        toast.success("Schema saved", {
+            description: "Your schema has been saved successfully.",
+        });
         setTimeout(() => {
             setIsSaving(false);
         }, 1000);

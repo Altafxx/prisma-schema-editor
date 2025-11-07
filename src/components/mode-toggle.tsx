@@ -11,6 +11,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 export function ModeToggle() {
     const themeContext = useTheme();
@@ -71,6 +72,16 @@ export function ModeToggle() {
         // Call the original setTheme after DOM update to trigger React updates
         // This ensures CSS transitions start before React re-renders
         originalSetTheme(newTheme);
+
+        // Show toast notification
+        const themeLabels: Record<string, string> = {
+            light: "Light",
+            dark: "Dark",
+            system: "System",
+        };
+        toast.success("Theme changed", {
+            description: `Theme set to ${themeLabels[newTheme] || newTheme}.`,
+        });
     }, [originalSetTheme]);
 
     return (

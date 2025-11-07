@@ -18,6 +18,7 @@ import {
     readPrismaFile,
     extractPrismaFilesFromZip,
 } from "@/lib/file-utils";
+import { toast } from "sonner";
 
 interface ImportDialogProps {
     open: boolean;
@@ -79,10 +80,19 @@ export function ImportDialog({ open, onClose }: ImportDialogProps) {
                 fileInputRef.current.value = "";
             }
 
+            // Show success toast
+            toast.success("Files imported", {
+                description: `${schemaFiles.length} file${schemaFiles.length !== 1 ? "s" : ""} imported successfully.`,
+            });
+
             // Close dialog on success
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to import files");
+            const errorMessage = err instanceof Error ? err.message : "Failed to import files";
+            setError(errorMessage);
+            toast.error("Import failed", {
+                description: errorMessage,
+            });
         } finally {
             setIsProcessing(false);
         }

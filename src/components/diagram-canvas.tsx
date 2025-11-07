@@ -26,6 +26,7 @@ import { CustomEdge } from "./custom-edge";
 import { RelationDialog, type RelationOptions } from "./relation-dialog";
 import { addRelationToSchema, type ConnectionInfo } from "@/lib/schema-updater";
 import { useSettingsStore } from "@/store/settings-store";
+import { toast } from "sonner";
 
 interface HistoryState {
     nodes: Node[];
@@ -565,6 +566,16 @@ export function DiagramCanvas({
 
             // Update schema through callback
             onSchemaUpdate(updatedSchema);
+
+            // Show success toast
+            const relationTypeLabels: Record<string, string> = {
+                "1-1": "One-to-One",
+                "1-M": "One-to-Many",
+                "M-M": "Many-to-Many",
+            };
+            toast.success("Relation saved", {
+                description: `${relationTypeLabels[options.type] || options.type} relation added between ${connectionInfo.sourceModel} and ${connectionInfo.targetModel}.`,
+            });
 
             // Close dialog
             setPendingConnection(null);

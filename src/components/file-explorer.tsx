@@ -10,6 +10,7 @@ import { DeleteDialog } from "./delete-dialog";
 import { CreateFileDialog } from "./create-file-dialog";
 import { useSettingsStore } from "@/store/settings-store";
 import { SidebarWrapper } from "./sidebar-wrapper";
+import { toast } from "sonner";
 
 export function FileExplorer() {
     const {
@@ -36,6 +37,9 @@ export function FileExplorer() {
             name: fileName,
             content: "",
             isMain: false,
+        });
+        toast.success("File created", {
+            description: `${fileName} has been created successfully.`,
         });
     };
 
