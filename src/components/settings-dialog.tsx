@@ -127,8 +127,14 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 dark:bg-black/70 transition-colors duration-200 p-4">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 p-4 sm:p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto transition-colors duration-200">
+        <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 dark:bg-black/70 transition-colors duration-200 p-4"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 p-4 sm:p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto transition-colors duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
                         Settings
