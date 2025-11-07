@@ -15,6 +15,7 @@ import type { Node, Edge } from "reactflow";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export function SplitEditor() {
     const {
@@ -29,13 +30,22 @@ export function SplitEditor() {
         saveSchema,
     } = useSchemaStore();
 
+    const { theme, resolvedTheme } = useTheme();
     const [isSaving, setIsSaving] = useState(false);
+    // Initialize with current DOM state to avoid flash of wrong theme
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.documentElement.classList.contains("dark");
+        }
+        return false;
+    });
     const lastSaveRef = useRef<number>(Date.now());
 
     const activeFile = schemaFiles.find((f) => f.name === activeFileId) || schemaFiles[0];
     const activeContent = activeFile?.content || "";
 
     const editorRef = useRef<any>(null);
+    const monacoRef = useRef<any>(null);
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isUpdatingFromDiagramRef = useRef(false);
     const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -138,9 +148,54 @@ export function SplitEditor() {
         // Diagram edges changed - could regenerate schema if needed
     };
 
+    // Detect dark mode from DOM class (more reliable than resolvedTheme)
+    useEffect(() => {
+        const checkDarkMode = () => {
+            const isDark = document.documentElement.classList.contains("dark");
+            setIsDarkMode(isDark);
+        };
+
+        // Check initially
+        checkDarkMode();
+
+        // Watch for class changes on document element
+        const observer = new MutationObserver(() => {
+            checkDarkMode();
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"],
+        });
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    // Also update when resolvedTheme changes (as a fallback)
+    useEffect(() => {
+        if (resolvedTheme) {
+            setIsDarkMode(resolvedTheme === "dark");
+        }
+    }, [resolvedTheme]);
+
+    // Determine Monaco editor theme based on dark mode state
+    const editorTheme = useMemo(() => {
+        return isDarkMode ? "vs-dark" : "vs";
+    }, [isDarkMode]);
+
+    // Update Monaco editor theme when theme changes
+    useEffect(() => {
+        if (monacoRef.current) {
+            monacoRef.current.editor.setTheme(editorTheme);
+        }
+    }, [editorTheme]);
+
     // Configure Monaco editor
     const handleEditorDidMount = (editor: any, monaco: any) => {
         editorRef.current = editor;
+        monacoRef.current = monaco;
 
         // Register Prisma language
         monaco.languages.register({ id: "prisma" });
@@ -176,6 +231,9 @@ export function SplitEditor() {
             formatOnType: true,
             contextmenu: true,
         });
+
+        // Set initial theme
+        monaco.editor.setTheme(editorTheme);
 
         // Ensure editor can receive keyboard input
         editor.focus();
@@ -250,7 +308,7 @@ export function SplitEditor() {
                                 value={activeContent}
                                 onChange={handleEditorChange}
                                 onMount={handleEditorDidMount}
-                                theme="vs-dark"
+                                theme={editorTheme}
                                 options={{
                                     readOnly: false,
                                     domReadOnly: false,
