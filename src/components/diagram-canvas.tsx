@@ -16,6 +16,7 @@ import ReactFlow, {
     Handle,
     Position,
     useReactFlow,
+    type BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import type { ParsedPrismaSchema } from "@/types/prisma";
@@ -24,6 +25,7 @@ import dagre from "dagre";
 import { CustomEdge } from "./custom-edge";
 import { RelationDialog, type RelationOptions } from "./relation-dialog";
 import { addRelationToSchema, type ConnectionInfo } from "@/lib/schema-updater";
+import { useSettingsStore } from "@/store/settings-store";
 
 interface HistoryState {
     nodes: Node[];
@@ -284,6 +286,7 @@ export function DiagramCanvas({
     readonly = false,
     onSchemaUpdate,
 }: DiagramCanvasProps) {
+    const { gridPattern, gridOpacity } = useSettingsStore((state) => state.settings);
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [pendingConnection, setPendingConnection] = useState<{
@@ -773,7 +776,18 @@ export function DiagramCanvas({
                 fitView
                 attributionPosition="bottom-left"
             >
-                <Background />
+                {gridPattern === "dots" && (
+                    <Background
+                        variant={"dots" as BackgroundVariant}
+                        style={{ opacity: gridOpacity }}
+                    />
+                )}
+                {gridPattern === "lines" && (
+                    <Background
+                        variant={"lines" as BackgroundVariant}
+                        style={{ opacity: gridOpacity }}
+                    />
+                )}
                 <Controls className="react-flow-controls" />
                 <MiniMap className="react-flow-minimap" />
                 <Panel position="top-right" className="bg-white dark:bg-zinc-900 p-2 rounded shadow">

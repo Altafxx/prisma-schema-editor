@@ -285,7 +285,7 @@ function SidebarWrapper({
                         )}
                     </div>
 
-                    {/* Import/Export buttons at bottom */}
+                    {/* Import/Export/Settings buttons at bottom */}
                     <div className="flex flex-col *:py-4 *:w-full *:justify-start *:text-sm *:rounded-none *:border-x-0 *:border-t *:border-b-0 *:border-zinc-300 dark:*:border-zinc-700 hover:*:cursor-pointer">
                         <Button
                             onClick={onImport}

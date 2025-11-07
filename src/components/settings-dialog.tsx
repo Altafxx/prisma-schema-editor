@@ -5,10 +5,16 @@ import { Button } from "@/components/ui/button";
 import { X, Moon, Sun, Monitor } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
 import { useSettingsStore } from "@/store/settings-store";
 import { useTheme } from "next-themes";
-import type { Theme } from "@/store/settings-store";
+import type { Theme, GridPattern } from "@/store/settings-store";
 import type { RelationMode } from "./relation-dialog";
+
+// Fix for displayName error - assign displayName to Slider component
+if (typeof Slider !== "undefined" && !(Slider as any).displayName) {
+    (Slider as any).displayName = "Slider";
+}
 
 interface SettingsDialogProps {
     open: boolean;
@@ -37,6 +43,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     const [defaultFileName, setDefaultFileName] = React.useState(settings.defaultFileName);
     const [defaultZipName, setDefaultZipName] = React.useState(settings.defaultZipName);
     const [defaultRelationMode, setDefaultRelationMode] = React.useState<RelationMode>(settings.defaultRelationMode);
+    const [gridPattern, setGridPattern] = React.useState<GridPattern>(settings.gridPattern);
+    const [gridOpacity, setGridOpacity] = React.useState(settings.gridOpacity);
 
     // Split filenames into name and extension
     const fileNameParts = React.useMemo(() => splitFilename(defaultFileName, ".prisma"), [defaultFileName]);
@@ -54,6 +62,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             setDefaultFileName(settings.defaultFileName);
             setDefaultZipName(settings.defaultZipName);
             setDefaultRelationMode(settings.defaultRelationMode);
+            setGridPattern(settings.gridPattern);
+            setGridOpacity(settings.gridOpacity);
         }
     }, [open, settings]);
 
@@ -81,6 +91,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             defaultFileName: finalFileName,
             defaultZipName: finalZipName,
             defaultRelationMode,
+            gridPattern,
+            gridOpacity,
         });
 
         // Update theme if it changed
@@ -248,6 +260,81 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                             </div>
                         </RadioGroup>
                     </div>
+
+                    {/* Grid Pattern */}
+                    <div>
+                        <Label className="text-sm font-semibold mb-3 block transition-colors duration-200">
+                            Canvas Grid Pattern
+                        </Label>
+                        <RadioGroup
+                            value={gridPattern}
+                            onValueChange={(value) => setGridPattern(value as GridPattern)}
+                        >
+                            <div className="flex items-start space-x-2 mb-2">
+                                <RadioGroupItem value="dots" id="grid-dots" className="mt-0.5" />
+                                <Label htmlFor="grid-dots" className="cursor-pointer flex-1">
+                                    <span className="font-medium block">Dots</span>
+                                    <span className="text-xs text-zinc-500 dark:text-zinc-400 block transition-colors duration-200">
+                                        Display dot pattern on the canvas
+                                    </span>
+                                </Label>
+                            </div>
+                            <div className="flex items-start space-x-2 mb-2">
+                                <RadioGroupItem value="lines" id="grid-lines" className="mt-0.5" />
+                                <Label htmlFor="grid-lines" className="cursor-pointer flex-1">
+                                    <span className="font-medium block">Lines</span>
+                                    <span className="text-xs text-zinc-500 dark:text-zinc-400 block transition-colors duration-200">
+                                        Display grid lines on the canvas
+                                    </span>
+                                </Label>
+                            </div>
+                            <div className="flex items-start space-x-2">
+                                <RadioGroupItem value="none" id="grid-none" className="mt-0.5" />
+                                <Label htmlFor="grid-none" className="cursor-pointer flex-1">
+                                    <span className="font-medium block">None</span>
+                                    <span className="text-xs text-zinc-500 dark:text-zinc-400 block transition-colors duration-200">
+                                        No background pattern
+                                    </span>
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
+                    {/* Grid Opacity */}
+                    {gridPattern !== "none" && (
+                        <div>
+                            <Label className="text-sm font-semibold mb-2 block transition-colors duration-200">
+                                Grid Opacity
+                            </Label>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 transition-colors duration-200">
+                                Adjust the opacity of the grid pattern
+                            </p>
+                            <div className="flex items-center gap-3">
+                                <Slider
+                                    value={[gridOpacity * 100]}
+                                    onValueChange={(value) => setGridOpacity(value[0] / 100)}
+                                    min={0}
+                                    max={100}
+                                    step={1}
+                                    className="flex-1"
+                                />
+                                <div className="w-16 text-right">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        value={Math.round(gridOpacity * 100)}
+                                        onChange={(e) => {
+                                            const value = parseInt(e.target.value) || 0;
+                                            setGridOpacity(Math.max(0, Math.min(100, value)) / 100);
+                                        }}
+                                        className="w-full px-2 py-1 text-sm bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100 transition-colors duration-200"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">
