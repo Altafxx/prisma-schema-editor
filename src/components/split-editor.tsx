@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, startTransition } from "react";
 import Editor from "@monaco-editor/react";
 import { DiagramCanvas } from "./diagram-canvas";
 import { FileExplorer } from "./file-explorer";
@@ -152,13 +152,20 @@ export function SplitEditor() {
     useEffect(() => {
         const checkDarkMode = () => {
             const isDark = document.documentElement.classList.contains("dark");
-            setIsDarkMode(isDark);
+            // Use startTransition to make state updates non-blocking
+            startTransition(() => {
+                setIsDarkMode((prev) => {
+                    // Only update if changed to avoid unnecessary re-renders
+                    return prev !== isDark ? isDark : prev;
+                });
+            });
         };
 
         // Check initially
         checkDarkMode();
 
         // Watch for class changes on document element
+        // Use a simple callback without requestAnimationFrame to avoid delays
         const observer = new MutationObserver(() => {
             checkDarkMode();
         });
@@ -176,7 +183,10 @@ export function SplitEditor() {
     // Also update when resolvedTheme changes (as a fallback)
     useEffect(() => {
         if (resolvedTheme) {
-            setIsDarkMode(resolvedTheme === "dark");
+            const isDark = resolvedTheme === "dark";
+            startTransition(() => {
+                setIsDarkMode((prev) => prev !== isDark ? isDark : prev);
+            });
         }
     }, [resolvedTheme]);
 
@@ -186,9 +196,12 @@ export function SplitEditor() {
     }, [isDarkMode]);
 
     // Update Monaco editor theme when theme changes
+    // Use startTransition to make this non-blocking
     useEffect(() => {
         if (monacoRef.current) {
-            monacoRef.current.editor.setTheme(editorTheme);
+            startTransition(() => {
+                monacoRef.current.editor.setTheme(editorTheme);
+            });
         }
     }, [editorTheme]);
 
@@ -281,20 +294,20 @@ export function SplitEditor() {
             <ResizablePanelGroup direction="horizontal" className="flex-1">
                 {/* Left Panel - Editor */}
                 <ResizablePanel defaultSize={50} minSize={20}>
-                    <div className="h-full flex flex-col border-r border-zinc-300 dark:border-zinc-700">
-                        <div className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-700 px-4 py-4 flex items-center justify-between min-h-[65px]">
+                    <div className="h-full flex flex-col border-r border-zinc-300 dark:border-zinc-700 transition-colors duration-200">
+                        <div className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-700 px-4 py-4 flex items-center justify-between min-h-[65px] transition-colors duration-200">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
                                     Prisma Schema
                                 </h2>
                                 {activeFile && (
-                                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                                    <span className="text-xs text-zinc-500 dark:text-zinc-400 transition-colors duration-200">
                                         {activeFile.name}
                                     </span>
                                 )}
                             </div>
                             {error && (
-                                <div className="text-xs text-red-600 dark:text-red-400 px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded">
+                                <div className="text-xs text-red-600 dark:text-red-400 px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded transition-colors duration-200">
                                     {error}
                                 </div>
                             )}
@@ -333,8 +346,8 @@ export function SplitEditor() {
                 {/* Right Panel - Diagram */}
                 <ResizablePanel defaultSize={50} minSize={20}>
                     <div className="h-full flex flex-col">
-                        <div className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-700 px-4 py-4 flex items-center justify-between min-h-[65px]">
-                            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                        <div className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-700 px-4 py-4 flex items-center justify-between min-h-[65px] transition-colors duration-200">
+                            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
                                 Database Diagram
                             </h2>
                             <div className="flex items-center gap-2">

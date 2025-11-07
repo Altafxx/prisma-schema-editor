@@ -118,8 +118,25 @@
     @apply border-border outline-ring/50;
   }
 
+  /* Optimized: Only transition CSS custom properties, not all elements */
+  :root {
+    transition: none;
+  }
+
+  html {
+    transition: none;
+  }
+
   body {
     @apply bg-background text-foreground;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  /* Apply transitions only to elements that explicitly need them via classes */
+  [class*="transition-colors"] {
+    transition-property: background-color, border-color, color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
   }
 }
 

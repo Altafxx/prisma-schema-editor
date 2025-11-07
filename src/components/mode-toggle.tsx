@@ -44,14 +44,12 @@ export function ModeToggle() {
 
     // Workaround: manually update localStorage and HTML class since next-themes isn't applying the class
     const handleSetTheme = React.useCallback((newTheme: string) => {
-        // Call the original setTheme
-        originalSetTheme(newTheme);
-
-        // Manually update localStorage
+        // Manually update localStorage first
         if (typeof window !== "undefined") {
             localStorage.setItem("theme", newTheme);
 
             // Manually update HTML class based on resolved theme
+            // Do this synchronously before React updates to ensure all CSS transitions start together
             const root = document.documentElement;
             root.classList.remove("light", "dark");
 
@@ -69,6 +67,10 @@ export function ModeToggle() {
                 root.classList.add("light");
             }
         }
+
+        // Call the original setTheme after DOM update to trigger React updates
+        // This ensures CSS transitions start before React re-renders
+        originalSetTheme(newTheme);
     }, [originalSetTheme]);
 
     return (

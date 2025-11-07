@@ -146,23 +146,23 @@ function SidebarWrapper({
         <>
             {/* External trigger when collapsed */}
             {!open && (
-                <div className="flex items-start justify-center border-r border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 pt-2 min-w-12">
+                <div className="flex items-start justify-center border-r border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 pt-2 min-w-12 transition-colors duration-200">
                     <SidebarTrigger />
                 </div>
             )}
             <Sidebar
                 side="left"
                 collapsible="offcanvas"
-                className="bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
+                className="bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700 transition-colors duration-200"
             >
                 <SidebarHeader className="justify-between">
-                    <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
+                    <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide transition-colors duration-200">
                         Schema Files
                     </h3>
                     <div className="flex items-center gap-1">
                         <button
                             onClick={() => setShowAddFile(true)}
-                            className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm px-1.5 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                            className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm px-1.5 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors duration-200"
                             title="Add new file"
                         >
                             +
