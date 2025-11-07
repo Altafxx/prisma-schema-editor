@@ -10,6 +10,10 @@ import {
     SidebarTrigger,
     useSidebar,
 } from "@/components/ui/sidebar";
+import { ImportDialog } from "./import-dialog";
+import { ExportDialog } from "./export-dialog";
+import { Button } from "@/components/ui/button";
+import { Upload, Download, Settings } from "lucide-react";
 
 export function FileExplorer() {
     const {
@@ -25,6 +29,8 @@ export function FileExplorer() {
     const [newFileName, setNewFileName] = useState("");
     const [showAddFile, setShowAddFile] = useState(false);
     const [newFileInput, setNewFileInput] = useState("");
+    const [showImportDialog, setShowImportDialog] = useState(false);
+    const [showExportDialog, setShowExportDialog] = useState(false);
 
     const handleAddFile = () => {
         const fileName = newFileInput.trim();
@@ -83,25 +89,31 @@ export function FileExplorer() {
     const otherFiles = schemaFiles.filter((f) => !f.isMain);
 
     return (
-        <SidebarProvider defaultOpen={true}>
-            <SidebarWrapper
-                mainFile={mainFile}
-                otherFiles={otherFiles}
-                activeFileId={activeFileId}
-                setActiveFile={setActiveFile}
-                onStartRename={handleStartRename}
-                onFinishRename={handleFinishRename}
-                onDelete={handleDeleteFile}
-                renamingFileId={renamingFileId}
-                newFileName={newFileName}
-                setNewFileName={setNewFileName}
-                showAddFile={showAddFile}
-                setShowAddFile={setShowAddFile}
-                newFileInput={newFileInput}
-                setNewFileInput={setNewFileInput}
-                onAddFile={handleAddFile}
-            />
-        </SidebarProvider>
+        <>
+            <SidebarProvider defaultOpen={true}>
+                <SidebarWrapper
+                    mainFile={mainFile}
+                    otherFiles={otherFiles}
+                    activeFileId={activeFileId}
+                    setActiveFile={setActiveFile}
+                    onStartRename={handleStartRename}
+                    onFinishRename={handleFinishRename}
+                    onDelete={handleDeleteFile}
+                    renamingFileId={renamingFileId}
+                    newFileName={newFileName}
+                    setNewFileName={setNewFileName}
+                    showAddFile={showAddFile}
+                    setShowAddFile={setShowAddFile}
+                    newFileInput={newFileInput}
+                    setNewFileInput={setNewFileInput}
+                    onAddFile={handleAddFile}
+                    onImport={() => setShowImportDialog(true)}
+                    onExport={() => setShowExportDialog(true)}
+                />
+            </SidebarProvider>
+            <ImportDialog open={showImportDialog} onClose={() => setShowImportDialog(false)} />
+            <ExportDialog open={showExportDialog} onClose={() => setShowExportDialog(false)} />
+        </>
     );
 }
 
@@ -121,6 +133,8 @@ interface SidebarWrapperProps {
     newFileInput: string;
     setNewFileInput: (input: string) => void;
     onAddFile: () => void;
+    onImport: () => void;
+    onExport: () => void;
 }
 
 function SidebarWrapper({
@@ -139,6 +153,8 @@ function SidebarWrapper({
     newFileInput,
     setNewFileInput,
     onAddFile,
+    onImport,
+    onExport,
 }: SidebarWrapperProps) {
     const { open } = useSidebar();
 
@@ -256,6 +272,24 @@ function SidebarWrapper({
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Import/Export buttons at bottom */}
+                    <div className="flex flex-col *:py-4 *:w-full *:justify-start *:text-sm *:rounded-none *:border-x-0 *:border-t *:border-b-0 *:border-zinc-300 dark:*:border-zinc-700 hover:*:cursor-pointer">
+                        <Button
+                            onClick={onImport}
+                            variant="outline"
+                        >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                        </Button>
+                        <Button
+                            onClick={onExport}
+                            variant="outline"
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Export
+                        </Button>
                     </div>
                 </SidebarContent>
             </Sidebar>

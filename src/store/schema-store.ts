@@ -41,6 +41,10 @@ interface SchemaStore {
   // Save/Load functions
   saveSchema: () => void;
   loadSchema: () => void;
+
+  // Import/Export functions
+  importSchemas: (files: SchemaFile[], replace: boolean) => void;
+  exportSchemaData: () => { schemaFiles: SchemaFile[]; activeFileId: string | null };
 }
 
 const defaultSchemaContent = `generator client {
@@ -254,6 +258,64 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
       }
     }
     return false;
+  },
+
+  // Import schemas from files
+  importSchemas: (files, replace) => {
+    const state = get();
+
+    if (replace) {
+      // Replace all existing files
+      // Ensure at least one file is marked as main
+      const filesWithMain = files.length > 0
+        ? files.map((f, i) => ({ ...f, isMain: i === 0 && !files.some(f2 => f2.isMain) }))
+        : files;
+
+      set({
+        schemaFiles: filesWithMain,
+        activeFileId: filesWithMain[0]?.name || null,
+      });
+    } else {
+      // Merge with existing files
+      const existingNames = new Set(state.schemaFiles.map((f) => f.name));
+      const newFiles: SchemaFile[] = [];
+
+      files.forEach((file) => {
+        let finalName = file.name;
+        let counter = 1;
+
+        // Handle name conflicts by appending numbers
+        while (existingNames.has(finalName)) {
+          const nameWithoutExt = file.name.replace(/\.prisma$/, "");
+          finalName = `${nameWithoutExt}_${counter}.prisma`;
+          counter++;
+        }
+
+        existingNames.add(finalName);
+        newFiles.push({
+          ...file,
+          name: finalName,
+          isMain: false, // Don't allow imported files to override main file
+        });
+      });
+
+      set({
+        schemaFiles: [...state.schemaFiles, ...newFiles],
+        activeFileId: newFiles[0]?.name || state.activeFileId,
+      });
+    }
+
+    // Auto-save after import
+    state.saveSchema();
+  },
+
+  // Export schema data
+  exportSchemaData: () => {
+    const state = get();
+    return {
+      schemaFiles: state.schemaFiles,
+      activeFileId: state.activeFileId,
+    };
   },
 }));
 

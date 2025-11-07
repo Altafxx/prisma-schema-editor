@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  devIndicators: {
+    position: "bottom-right",
+  },
   turbopack: {
     // Turbopack configuration for Next.js 16+
   },
