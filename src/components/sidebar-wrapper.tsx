@@ -57,22 +57,11 @@ export function SidebarWrapper({
             <SidebarHeader className="relative flex items-center">
                 <SidebarTrigger className={`shrink-0 absolute z-10 ${open ? "left-4" : "left-1/2 -translate-x-1/2"}`} />
                 {open && (
-                    <>
-                        <div className="flex items-center gap-2 flex-1 min-w-0 ml-12">
-                            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-wide transition-opacity duration-300 whitespace-nowrap">
-                                Schema Files
-                            </h2>
-                        </div>
-                        <Button
-                            onClick={onCreateFile}
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                            title="Add new file"
-                        >
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    </>
+                    <div className="flex items-center gap-2 flex-1 min-w-0 ml-12">
+                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-wide transition-opacity duration-300 whitespace-nowrap">
+                            Schema Files
+                        </h2>
+                    </div>
                 )}
             </SidebarHeader>
 
@@ -124,8 +113,18 @@ export function SidebarWrapper({
                     )}
                 </div>
 
-                {/* Import/Export/Settings buttons at bottom */}
+                {/* New File/Import/Export/Settings buttons at bottom */}
                 <div className="flex flex-col gap-1 px-3 pb-2 *:px-2">
+                    <Button
+                        onClick={onCreateFile}
+                        variant="ghost"
+                        size="icon"
+                        className={open ? "w-full justify-start" : "w-full justify-center"}
+                        title="Add new file"
+                    >
+                        <Plus className="h-4 w-4 shrink-0" />
+                        {open && <span className="ml-2 text-sm whitespace-nowrap">New File</span>}
+                    </Button>
                     <Button
                         onClick={onImport}
                         variant="ghost"
