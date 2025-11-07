@@ -1,6 +1,7 @@
 "use client";
 
 import { useSettingsStore } from "@/store/settings-store";
+import { Button } from "@/components/ui/button";
 
 interface FileItemProps {
     file: { name: string; content: string; isMain: boolean };
@@ -85,21 +86,25 @@ export function FileItem({
                 )}
             </span>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                <button
+                <Button
                     onClick={onRename}
-                    className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-xs px-1"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-xs h-6 w-6"
                     title="Rename"
                 >
                     ✎
-                </button>
+                </Button>
                 {canDelete && (
-                    <button
+                    <Button
                         onClick={onDelete}
-                        className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 text-xs px-1"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 text-xs h-6 w-6"
                         title="Delete"
                     >
                         ×
-                    </button>
+                    </Button>
                 )}
             </div>
         </div>

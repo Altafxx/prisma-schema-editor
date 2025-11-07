@@ -2,11 +2,26 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useSettingsStore } from "@/store/settings-store";
 import { useTheme } from "next-themes";
 import type { Theme, GridPattern } from "@/store/settings-store";
@@ -79,8 +94,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         setDefaultZipName(name ? `${name}.zip` : ".zip");
     };
 
-    if (!open) return null;
-
     const handleSave = () => {
         // Ensure extensions are correct
         const fileName = defaultFileName.trim() || "schema";
@@ -127,27 +140,11 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     };
 
     return (
-        <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 dark:bg-black/70 transition-colors duration-200 p-4"
-            onClick={onClose}
-        >
-            <div
-                className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 p-4 sm:p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto transition-colors duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
-                        Settings
-                    </h3>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onClose}
-                        className="h-6 w-6"
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Settings</DialogTitle>
+                </DialogHeader>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     {/* Left Section */}
@@ -166,8 +163,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     <RadioGroup
                                         value={theme}
                                         onValueChange={(value) => setTheme(value as Theme)}
+                                        className="flex flex-col gap-3"
                                     >
-                                        <div className="flex items-start space-x-2 mb-2">
+                                        <div className="flex items-start space-x-2">
                                             <RadioGroupItem value="light" id="theme-light" className="mt-0.5" />
                                             <Label htmlFor="theme-light" className="cursor-pointer flex-1">
                                                 <div className="flex items-center gap-2">
@@ -176,7 +174,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                                 </div>
                                             </Label>
                                         </div>
-                                        <div className="flex items-start space-x-2 mb-2">
+                                        <div className="flex items-start space-x-2">
                                             <RadioGroupItem value="dark" id="theme-dark" className="mt-0.5" />
                                             <Label htmlFor="theme-dark" className="cursor-pointer flex-1">
                                                 <div className="flex items-center gap-2">
@@ -231,21 +229,22 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 transition-colors duration-200">
                                         Default name for new schema files
                                     </p>
-                                    <div className="flex gap-0">
-                                        <input
+                                    <div className="flex gap-2">
+                                        <Input
                                             type="text"
                                             value={fileNameParts.name}
                                             onChange={(e) => handleFileNameChange(e.target.value)}
                                             placeholder="schema"
-                                            className="flex-1 px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-l text-zinc-900 dark:text-zinc-100 transition-colors duration-200"
+                                            className="flex-1 rounded-l rounded-r-0 border-r-0"
                                         />
-                                        <select
-                                            disabled
-                                            value={fileNameParts.ext}
-                                            className="px-3 py-2 text-sm bg-zinc-100 dark:bg-zinc-800 border border-l-0 border-zinc-300 dark:border-zinc-700 rounded-r text-zinc-600 dark:text-zinc-400 cursor-not-allowed transition-colors duration-200"
-                                        >
-                                            <option value=".prisma">.prisma</option>
-                                        </select>
+                                        <Select value={fileNameParts.ext} disabled>
+                                            <SelectTrigger className="rounded-l-0 rounded-r border-l-0 w-auto min-w-[100px]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value=".prisma">.prisma</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 
@@ -257,21 +256,22 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 transition-colors duration-200">
                                         Default name for exported zip archives
                                     </p>
-                                    <div className="flex gap-0">
-                                        <input
+                                    <div className="flex gap-2">
+                                        <Input
                                             type="text"
                                             value={zipNameParts.name}
                                             onChange={(e) => handleZipNameChange(e.target.value)}
                                             placeholder="prisma-schema"
-                                            className="flex-1 px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-l text-zinc-900 dark:text-zinc-100 transition-colors duration-200"
+                                            className="flex-1 rounded-l rounded-r-0 border-r-0"
                                         />
-                                        <select
-                                            disabled
-                                            value={zipNameParts.ext}
-                                            className="px-3 py-2 text-sm bg-zinc-100 dark:bg-zinc-800 border border-l-0 border-zinc-300 dark:border-zinc-700 rounded-r text-zinc-600 dark:text-zinc-400 cursor-not-allowed transition-colors duration-200"
-                                        >
-                                            <option value=".zip">.zip</option>
-                                        </select>
+                                        <Select value={zipNameParts.ext} disabled>
+                                            <SelectTrigger className="rounded-l-0 rounded-r border-l-0 w-auto min-w-[80px]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value=".zip">.zip</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                             </div>
@@ -294,8 +294,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     <RadioGroup
                                         value={gridPattern}
                                         onValueChange={(value) => setGridPattern(value as GridPattern)}
+                                        className="flex flex-col gap-3"
                                     >
-                                        <div className="flex items-start space-x-2 mb-2">
+                                        <div className="flex items-start space-x-2">
                                             <RadioGroupItem value="dots" id="grid-dots" className="mt-0.5" />
                                             <Label htmlFor="grid-dots" className="cursor-pointer flex-1">
                                                 <span className="font-medium block">Dots</span>
@@ -304,7 +305,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                                 </span>
                                             </Label>
                                         </div>
-                                        <div className="flex items-start space-x-2 mb-2">
+                                        <div className="flex items-start space-x-2">
                                             <RadioGroupItem value="lines" id="grid-lines" className="mt-0.5" />
                                             <Label htmlFor="grid-lines" className="cursor-pointer flex-1">
                                                 <span className="font-medium block">Lines</span>
@@ -344,7 +345,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                                 className="flex-1"
                                             />
                                             <div className="w-16 text-right">
-                                                <input
+                                                <Input
                                                     type="number"
                                                     min="0"
                                                     max="100"
@@ -354,7 +355,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                                         const value = parseInt(e.target.value) || 0;
                                                         setGridOpacity(Math.max(0, Math.min(100, value)) / 100);
                                                     }}
-                                                    className="w-full px-2 py-1 text-sm bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100 transition-colors duration-200"
+                                                    className="w-full text-right"
                                                 />
                                             </div>
                                         </div>
@@ -377,8 +378,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     <RadioGroup
                                         value={defaultRelationMode}
                                         onValueChange={(value) => setDefaultRelationMode(value as RelationMode)}
+                                        className="flex flex-col gap-3"
                                     >
-                                        <div className="flex items-start space-x-2 mb-2">
+                                        <div className="flex items-start space-x-2">
                                             <RadioGroupItem value="implicit" id="relation-implicit" className="mt-0.5" />
                                             <Label htmlFor="relation-implicit" className="cursor-pointer flex-1">
                                                 <span className="font-medium block">Implicit</span>
@@ -403,16 +405,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
+                <DialogFooter>
                     <Button variant="ghost" onClick={onClose}>
                         Cancel
                     </Button>
                     <Button onClick={handleSave}>
                         Save
                     </Button>
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 interface SidebarContextValue {
     open: boolean
@@ -124,11 +125,13 @@ const SidebarTrigger = React.forwardRef<HTMLButtonElement, SidebarTriggerProps>(
     ({ className, ...props }, ref) => {
         const { toggle, open } = useSidebar()
         return (
-            <button
+            <Button
                 ref={ref}
                 onClick={toggle}
+                variant="ghost"
+                size="icon"
                 className={cn(
-                    "relative inline-flex items-center justify-center rounded-md p-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+                    "relative",
                     className
                 )}
                 {...props}
@@ -172,7 +175,7 @@ const SidebarTrigger = React.forwardRef<HTMLButtonElement, SidebarTriggerProps>(
                     <path d="M3 6h18" />
                     <path d="M3 18h18" />
                 </svg>
-            </button>
+            </Button>
         )
     }
 )

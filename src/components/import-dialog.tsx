@@ -2,9 +2,17 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useSchemaStore, type SchemaFile } from "@/store/schema-store";
 import {
     readPrismaFile,
@@ -22,8 +30,6 @@ export function ImportDialog({ open, onClose }: ImportDialogProps) {
     const [isProcessing, setIsProcessing] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-    if (!open) return null;
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -87,34 +93,27 @@ export function ImportDialog({ open, onClose }: ImportDialogProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 dark:bg-black/70 transition-colors duration-200">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 p-6 w-full max-w-md transition-colors duration-200">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
-                        Import Schema Files
-                    </h3>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onClose}
-                        className="h-6 w-6"
-                        disabled={isProcessing}
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && !isProcessing && onClose()}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Import Schema Files</DialogTitle>
+                    <DialogDescription>
+                        You can select single or multiple .prisma files, or a .zip file containing .prisma files
+                    </DialogDescription>
+                </DialogHeader>
 
                 <div className="space-y-4">
                     <div>
-                        <Label className="text-sm font-semibold mb-2 block transition-colors duration-200">
+                        <Label className="text-sm font-semibold mb-2 block">
                             Import Mode
                         </Label>
                         <RadioGroup
                             value={replaceMode}
                             onValueChange={(value) => setReplaceMode(value as "replace" | "merge")}
                             disabled={isProcessing}
+                            className="flex flex-col gap-3"
                         >
-                            <div className="flex items-start space-x-2 mb-2">
+                            <div className="flex items-start space-x-2">
                                 <RadioGroupItem value="replace" id="replace" disabled={isProcessing} className="mt-0.5" />
                                 <Label
                                     htmlFor="replace"
@@ -142,12 +141,9 @@ export function ImportDialog({ open, onClose }: ImportDialogProps) {
                     </div>
 
                     <div>
-                        <Label className="text-sm font-semibold mb-2 block transition-colors duration-200">
+                        <Label className="text-sm font-semibold mb-2 block">
                             Select Files
                         </Label>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3 transition-colors duration-200">
-                            You can select single or multiple .prisma files, or a .zip file containing .prisma files
-                        </p>
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -183,13 +179,13 @@ export function ImportDialog({ open, onClose }: ImportDialogProps) {
                     )}
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
+                <DialogFooter>
                     <Button variant="ghost" onClick={onClose} disabled={isProcessing}>
                         Cancel
                     </Button>
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 

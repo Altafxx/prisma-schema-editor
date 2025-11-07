@@ -2,9 +2,16 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { X, ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useSettingsStore } from "@/store/settings-store";
 
 export type RelationType = "1-1" | "1-M" | "M-M";
@@ -56,8 +63,6 @@ export function RelationDialog({
         }
     }, [open, defaultRelationMode]);
 
-    if (!open) return null;
-
     const handleTypeSelect = (type: RelationType) => {
         setSelectedType(type);
         // Reset nullable options when switching types (user can choose for 1:1 and 1:M)
@@ -103,27 +108,11 @@ export function RelationDialog({
     // No longer needed - sections always show but are disabled when not applicable
 
     return (
-        <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 dark:bg-black/70 transition-colors duration-200"
-            onClick={onCancel}
-        >
-            <div
-                className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto transition-colors duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
-                        Select Relationship Type
-                    </h3>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onCancel}
-                        className="h-6 w-6"
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
+            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Select Relationship Type</DialogTitle>
+                </DialogHeader>
 
                 <div className="mb-4 flex items-center gap-2">
                     <div className="text-sm text-zinc-600 dark:text-zinc-400 flex-1 transition-colors duration-200">
@@ -208,11 +197,13 @@ export function RelationDialog({
                                 // For 1:1, allow selecting which side is nullable or both
                                 <div className="space-y-3">
                                     <div className="flex items-start space-x-2">
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={() => !(!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")) && setNullableSource(!nullableSource)}
                                             disabled={!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")}
-                                            className={`mt-0.5 w-5 h-5 rounded border-2 transition-colors flex items-center justify-center ${nullableSource
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            className={`mt-0.5 w-5 h-5 rounded border-2 transition-colors flex items-center justify-center p-0 ${nullableSource
                                                 ? "bg-blue-500 border-blue-500"
                                                 : "bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600"
                                                 } ${!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")
@@ -225,7 +216,7 @@ export function RelationDialog({
                                                     <path d="M5 13l4 4L19 7"></path>
                                                 </svg>
                                             )}
-                                        </button>
+                                        </Button>
                                         <Label
                                             className={!selectedType || (selectedType !== "1-1" && selectedType !== "1-M") ? "cursor-not-allowed opacity-50 flex-1" : "cursor-pointer flex-1"}
                                             onClick={() => !(!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")) && setNullableSource(!nullableSource)}
@@ -237,11 +228,13 @@ export function RelationDialog({
                                         </Label>
                                     </div>
                                     <div className="flex items-start space-x-2">
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={() => !(!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")) && setNullableTarget(!nullableTarget)}
                                             disabled={!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")}
-                                            className={`mt-0.5 w-5 h-5 rounded border-2 transition-colors flex items-center justify-center ${nullableTarget
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            className={`mt-0.5 w-5 h-5 rounded border-2 transition-colors flex items-center justify-center p-0 ${nullableTarget
                                                 ? "bg-blue-500 border-blue-500"
                                                 : "bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600"
                                                 } ${!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")
@@ -254,7 +247,7 @@ export function RelationDialog({
                                                     <path d="M5 13l4 4L19 7"></path>
                                                 </svg>
                                             )}
-                                        </button>
+                                        </Button>
                                         <Label
                                             className={!selectedType || (selectedType !== "1-1" && selectedType !== "1-M") ? "cursor-not-allowed opacity-50 flex-1" : "cursor-pointer flex-1"}
                                             onClick={() => !(!selectedType || (selectedType !== "1-1" && selectedType !== "1-M")) && setNullableTarget(!nullableTarget)}
@@ -269,10 +262,12 @@ export function RelationDialog({
                             ) : selectedType === "1-M" ? (
                                 // For 1:M, allow user to toggle nullable for the "one" side
                                 <div className="flex items-start space-x-2">
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={() => setNullableSource(!nullableSource)}
-                                        className={`mt-0.5 w-5 h-5 rounded border-2 transition-colors flex items-center justify-center cursor-pointer ${nullableSource
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className={`mt-0.5 w-5 h-5 rounded border-2 transition-colors flex items-center justify-center cursor-pointer p-0 ${nullableSource
                                             ? "bg-blue-500 border-blue-500"
                                             : "bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600"
                                             }`}
@@ -282,7 +277,7 @@ export function RelationDialog({
                                                 <path d="M5 13l4 4L19 7"></path>
                                             </svg>
                                         )}
-                                    </button>
+                                    </Button>
                                     <Label
                                         className="cursor-pointer flex-1"
                                         onClick={() => setNullableSource(!nullableSource)}
@@ -316,8 +311,9 @@ export function RelationDialog({
                                 value={selectedMode}
                                 onValueChange={(value) => setSelectedMode(value as RelationMode)}
                                 disabled={!selectedType || selectedType === "1-1" || selectedType === "1-M"}
+                                className="flex flex-col gap-3"
                             >
-                                <div className="flex items-start space-x-2 mb-2">
+                                <div className="flex items-start space-x-2">
                                     <RadioGroupItem
                                         value="implicit"
                                         id="implicit"
@@ -361,8 +357,9 @@ export function RelationDialog({
                                 value={junctionOrder}
                                 onValueChange={(value) => setJunctionOrder(value as "AonB" | "BonA")}
                                 disabled={selectedType !== "M-M" || selectedMode !== "explicit"}
+                                className="flex flex-col gap-3"
                             >
-                                <div className="flex items-start space-x-2 mb-2">
+                                <div className="flex items-start space-x-2">
                                     <RadioGroupItem
                                         value="AonB"
                                         id="aonb"
@@ -401,7 +398,7 @@ export function RelationDialog({
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
+                <DialogFooter>
                     <Button variant="ghost" onClick={onCancel}>
                         Cancel
                     </Button>
@@ -411,9 +408,9 @@ export function RelationDialog({
                     >
                         Confirm
                     </Button>
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 

@@ -2,8 +2,17 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useSchemaStore } from "@/store/schema-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { createZipFromFiles, downloadFile } from "@/lib/file-utils";
@@ -36,8 +45,6 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
             }
         }
     }, [open, hasMultipleFiles, mainFile, defaultZipName, defaultFileName]);
-
-    if (!open) return null;
 
     const handleExport = async () => {
         setIsExporting(true);
@@ -87,40 +94,29 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 dark:bg-black/70 transition-colors duration-200">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 p-6 w-full max-w-md transition-colors duration-200">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
-                        Export Schema {hasMultipleFiles ? "Files" : "File"}
-                    </h3>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onClose}
-                        className="h-6 w-6"
-                        disabled={isExporting}
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && !isExporting && onClose()}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Export Schema {hasMultipleFiles ? "Files" : "File"}</DialogTitle>
+                    <DialogDescription>
+                        {hasMultipleFiles
+                            ? "All schema files will be exported as a zip archive"
+                            : `Exporting: ${mainFile?.name || "schema.prisma"}`}
+                    </DialogDescription>
+                </DialogHeader>
 
                 <div className="space-y-4">
                     <div>
-                        <Label className="text-sm font-semibold mb-2 block transition-colors duration-200">
+                        <Label className="text-sm font-semibold mb-2 block">
                             Filename {hasMultipleFiles ? "(optional)" : "(optional)"}
                         </Label>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 transition-colors duration-200">
-                            {hasMultipleFiles
-                                ? "All schema files will be exported as a zip archive"
-                                : `Exporting: ${mainFile?.name || "schema.prisma"}`}
-                        </p>
-                        <input
+                        <Input
                             type="text"
                             value={filename}
                             onChange={(e) => setFilename(e.target.value)}
                             disabled={isExporting}
                             placeholder={hasMultipleFiles ? defaultZipName : mainFile?.name || defaultFileName}
-                            className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100 transition-colors duration-200 disabled:opacity-50"
+                            className="w-full"
                         />
                     </div>
 
@@ -131,7 +127,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                     )}
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
+                <DialogFooter>
                     <Button variant="ghost" onClick={onClose} disabled={isExporting}>
                         Cancel
                     </Button>
@@ -148,9 +144,9 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                             </>
                         )}
                     </Button>
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 

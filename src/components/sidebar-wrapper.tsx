@@ -63,7 +63,7 @@ export function SidebarWrapper({
             className="bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700 transition-all duration-300 ease-in-out"
         >
             <SidebarHeader className="relative flex items-center">
-                <SidebarTrigger className={`shrink-0 absolute z-10 ${open ? "left-6" : "left-1/2 -translate-x-1/2"}`} />
+                <SidebarTrigger className={`shrink-0 absolute z-10 ${open ? "left-4" : "left-1/2 -translate-x-1/2"}`} />
                 {open && (
                     <>
                         <div className="flex items-center gap-2 flex-1 min-w-0 ml-12">
@@ -151,21 +151,24 @@ export function SidebarWrapper({
                                 autoFocus
                             />
                             <div className="flex gap-1 mt-1">
-                                <button
+                                <Button
                                     onClick={onAddFile}
-                                    className="text-xs px-2 py-0.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                    size="sm"
+                                    className="text-xs px-2 py-0.5 h-auto"
                                 >
                                     Add
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={() => {
                                         setShowAddFile(false);
                                         setNewFileInput("");
                                     }}
-                                    className="text-xs px-2 py-0.5 bg-zinc-300 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded hover:bg-zinc-400 dark:hover:bg-zinc-600"
+                                    variant="secondary"
+                                    size="sm"
+                                    className="text-xs px-2 py-0.5 h-auto"
                                 >
                                     Cancel
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     )}
