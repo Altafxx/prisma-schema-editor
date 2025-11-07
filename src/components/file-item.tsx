@@ -2,6 +2,7 @@
 
 import { useSettingsStore } from "@/store/settings-store";
 import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface FileItemProps {
     file: { name: string; content: string; isMain: boolean };
@@ -85,25 +86,25 @@ export function FileItem({
                     </>
                 )}
             </span>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+            <div className="flex items-center gap-0 opacity-0 group-hover:opacity-100">
                 <Button
                     onClick={onRename}
                     variant="ghost"
-                    size="icon-sm"
-                    className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-xs h-6 w-6"
+                    size="icon"
+                    className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                     title="Rename"
                 >
-                    ✎
+                    <Pencil className="h-4 w-4" />
                 </Button>
                 {canDelete && (
                     <Button
                         onClick={onDelete}
                         variant="ghost"
-                        size="icon-sm"
-                        className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 text-xs h-6 w-6"
+                        size="icon"
+                        className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400"
                         title="Delete"
                     >
-                        ×
+                        <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
             </div>
