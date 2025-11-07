@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { ImportDialog } from "./import-dialog";
 import { ExportDialog } from "./export-dialog";
 import { SettingsDialog } from "./settings-dialog";
+import { DeleteDialog } from "./delete-dialog";
 import { useSettingsStore } from "@/store/settings-store";
 import { SidebarWrapper } from "./sidebar-wrapper";
 
@@ -27,6 +28,8 @@ export function FileExplorer() {
     const [showImportDialog, setShowImportDialog] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [fileToDelete, setFileToDelete] = useState<string | null>(null);
 
     const handleAddFile = () => {
         const fileName = newFileInput.trim();
@@ -55,8 +58,14 @@ export function FileExplorer() {
 
     const handleDeleteFile = (fileId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm(`Delete ${fileId}?`)) {
-            deleteSchemaFile(fileId);
+        setFileToDelete(fileId);
+        setShowDeleteDialog(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (fileToDelete) {
+            deleteSchemaFile(fileToDelete);
+            setFileToDelete(null);
         }
     };
 
@@ -112,6 +121,15 @@ export function FileExplorer() {
             <ImportDialog open={showImportDialog} onClose={() => setShowImportDialog(false)} />
             <ExportDialog open={showExportDialog} onClose={() => setShowExportDialog(false)} />
             <SettingsDialog open={showSettingsDialog} onClose={() => setShowSettingsDialog(false)} />
+            <DeleteDialog
+                open={showDeleteDialog}
+                onClose={() => {
+                    setShowDeleteDialog(false);
+                    setFileToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                filename={fileToDelete || ""}
+            />
         </>
     );
 }
