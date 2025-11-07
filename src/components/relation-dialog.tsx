@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { X, ArrowLeftRight } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useSettingsStore } from "@/store/settings-store";
 
 export type RelationType = "1-1" | "1-M" | "M-M";
 export type RelationMode = "implicit" | "explicit";
@@ -41,11 +42,19 @@ export function RelationDialog({
     onCancel,
     onReverse,
 }: RelationDialogProps) {
+    const { defaultRelationMode } = useSettingsStore((state) => state.settings);
     const [selectedType, setSelectedType] = React.useState<RelationType | null>(null);
-    const [selectedMode, setSelectedMode] = React.useState<RelationMode>("implicit");
+    const [selectedMode, setSelectedMode] = React.useState<RelationMode>(defaultRelationMode);
     const [junctionOrder, setJunctionOrder] = React.useState<"AonB" | "BonA">("AonB");
     const [nullableSource, setNullableSource] = React.useState(false); // For 1:1, nullable on source side
     const [nullableTarget, setNullableTarget] = React.useState(false); // For 1:1, nullable on target side
+
+    // Reset to default mode when dialog opens
+    React.useEffect(() => {
+        if (open) {
+            setSelectedMode(defaultRelationMode);
+        }
+    }, [open, defaultRelationMode]);
 
     if (!open) return null;
 

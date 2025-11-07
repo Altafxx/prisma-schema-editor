@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { X, Download, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useSchemaStore } from "@/store/schema-store";
+import { useSettingsStore } from "@/store/settings-store";
 import { createZipFromFiles, downloadFile } from "@/lib/file-utils";
 
 interface ExportDialogProps {
@@ -15,6 +16,7 @@ interface ExportDialogProps {
 export function ExportDialog({ open, onClose }: ExportDialogProps) {
     const exportSchemaData = useSchemaStore((state) => state.exportSchemaData);
     const schemaFiles = useSchemaStore((state) => state.schemaFiles);
+    const { defaultZipName, defaultFileName } = useSettingsStore((state) => state.settings);
     const mainFile = schemaFiles.find((f) => f.isMain);
     const hasMultipleFiles = schemaFiles.length > 1;
 
@@ -26,14 +28,14 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
     React.useEffect(() => {
         if (open) {
             if (hasMultipleFiles) {
-                setFilename("prisma-schema.zip");
+                setFilename(defaultZipName);
             } else if (mainFile) {
                 setFilename(mainFile.name);
             } else {
-                setFilename("schema.prisma");
+                setFilename(defaultFileName);
             }
         }
-    }, [open, hasMultipleFiles, mainFile]);
+    }, [open, hasMultipleFiles, mainFile, defaultZipName, defaultFileName]);
 
     if (!open) return null;
 
@@ -53,7 +55,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                     }))
                 );
 
-                const finalFilename = filename.trim() || "prisma-schema.zip";
+                const finalFilename = filename.trim() || defaultZipName;
                 const zipFilename = finalFilename.endsWith(".zip")
                     ? finalFilename
                     : `${finalFilename}.zip`;
@@ -117,7 +119,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                             value={filename}
                             onChange={(e) => setFilename(e.target.value)}
                             disabled={isExporting}
-                            placeholder={hasMultipleFiles ? "prisma-schema.zip" : mainFile?.name || "schema.prisma"}
+                            placeholder={hasMultipleFiles ? defaultZipName : mainFile?.name || defaultFileName}
                             className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100 transition-colors duration-200 disabled:opacity-50"
                         />
                     </div>

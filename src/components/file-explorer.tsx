@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/sidebar";
 import { ImportDialog } from "./import-dialog";
 import { ExportDialog } from "./export-dialog";
+import { SettingsDialog } from "./settings-dialog";
 import { Button } from "@/components/ui/button";
 import { Upload, Download, Settings } from "lucide-react";
+import { useSettingsStore } from "@/store/settings-store";
 
 export function FileExplorer() {
     const {
@@ -24,6 +26,7 @@ export function FileExplorer() {
         deleteSchemaFile,
         renameSchemaFile,
     } = useSchemaStore();
+    const { defaultFileName } = useSettingsStore((state) => state.settings);
 
     const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
     const [newFileName, setNewFileName] = useState("");
@@ -31,6 +34,7 @@ export function FileExplorer() {
     const [newFileInput, setNewFileInput] = useState("");
     const [showImportDialog, setShowImportDialog] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
+    const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
     const handleAddFile = () => {
         const fileName = newFileInput.trim();
@@ -109,10 +113,13 @@ export function FileExplorer() {
                     onAddFile={handleAddFile}
                     onImport={() => setShowImportDialog(true)}
                     onExport={() => setShowExportDialog(true)}
+                    onSettings={() => setShowSettingsDialog(true)}
+                    defaultFileName={defaultFileName}
                 />
             </SidebarProvider>
             <ImportDialog open={showImportDialog} onClose={() => setShowImportDialog(false)} />
             <ExportDialog open={showExportDialog} onClose={() => setShowExportDialog(false)} />
+            <SettingsDialog open={showSettingsDialog} onClose={() => setShowSettingsDialog(false)} />
         </>
     );
 }
@@ -135,6 +142,8 @@ interface SidebarWrapperProps {
     onAddFile: () => void;
     onImport: () => void;
     onExport: () => void;
+    onSettings: () => void;
+    defaultFileName: string;
 }
 
 function SidebarWrapper({
@@ -155,6 +164,8 @@ function SidebarWrapper({
     onAddFile,
     onImport,
     onExport,
+    onSettings,
+    defaultFileName,
 }: SidebarWrapperProps) {
     const { open } = useSidebar();
 
@@ -249,7 +260,7 @@ function SidebarWrapper({
                                             setNewFileInput("");
                                         }
                                     }}
-                                    placeholder="file.prisma"
+                                    placeholder={defaultFileName}
                                     className="w-full px-2 py-1 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded text-zinc-900 dark:text-zinc-100"
                                     autoFocus
                                 />
@@ -289,6 +300,13 @@ function SidebarWrapper({
                         >
                             <Download className="h-4 w-4 mr-2" />
                             Export
+                        </Button>
+                        <Button
+                            onClick={onSettings}
+                            variant="outline"
+                        >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Settings
                         </Button>
                     </div>
                 </SidebarContent>
