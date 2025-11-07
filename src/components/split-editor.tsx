@@ -352,7 +352,7 @@ export function SplitEditor() {
                             </h2>
                             <div className="flex items-center gap-2">
                                 <Button
-                                    variant="outline"
+                                    variant="ghost"
                                     size="icon"
                                     onClick={handleSave}
                                     disabled={isSaving}
