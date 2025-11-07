@@ -6,6 +6,13 @@ import { Download, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -29,22 +36,40 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
     const mainFile = schemaFiles.find((f) => f.isMain);
     const hasMultipleFiles = schemaFiles.length > 1;
 
-    const [filename, setFilename] = React.useState("");
+    // Helper to split filename into name and extension
+    const splitFilename = (filename: string, defaultExt: string) => {
+        const lastDot = filename.lastIndexOf(".");
+        if (lastDot === -1) {
+            return { name: filename, ext: defaultExt };
+        }
+        return {
+            name: filename.substring(0, lastDot),
+            ext: filename.substring(lastDot),
+        };
+    };
+
+    const [filenameName, setFilenameName] = React.useState("");
     const [isExporting, setIsExporting] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+
+    // Determine the extension based on export type
+    const fileExtension = hasMultipleFiles ? ".zip" : ".prisma";
 
     // Set default filename when dialog opens
     React.useEffect(() => {
         if (open) {
+            let defaultFilename = "";
             if (hasMultipleFiles) {
-                setFilename(defaultZipName);
+                defaultFilename = defaultZipName;
             } else if (mainFile) {
-                setFilename(mainFile.name);
+                defaultFilename = mainFile.name;
             } else {
-                setFilename(defaultFileName);
+                defaultFilename = defaultFileName;
             }
+            const parts = splitFilename(defaultFilename, fileExtension);
+            setFilenameName(parts.name);
         }
-    }, [open, hasMultipleFiles, mainFile, defaultZipName, defaultFileName]);
+    }, [open, hasMultipleFiles, mainFile, defaultZipName, defaultFileName, fileExtension]);
 
     const handleExport = async () => {
         setIsExporting(true);
@@ -62,10 +87,8 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                     }))
                 );
 
-                const finalFilename = filename.trim() || defaultZipName;
-                const zipFilename = finalFilename.endsWith(".zip")
-                    ? finalFilename
-                    : `${finalFilename}.zip`;
+                const name = filenameName.trim() || splitFilename(defaultZipName, ".zip").name;
+                const zipFilename = `${name}.zip`;
 
                 downloadFile(zipBlob, zipFilename);
             } else {
@@ -76,10 +99,9 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                 }
 
                 const blob = new Blob([file.content], { type: "text/plain" });
-                const finalFilename = filename.trim() || file.name;
-                const prismaFilename = finalFilename.endsWith(".prisma")
-                    ? finalFilename
-                    : `${finalFilename}.prisma`;
+                const defaultName = mainFile ? splitFilename(mainFile.name, ".prisma").name : splitFilename(defaultFileName, ".prisma").name;
+                const name = filenameName.trim() || defaultName;
+                const prismaFilename = `${name}.prisma`;
 
                 downloadFile(blob, prismaFilename);
             }
@@ -110,14 +132,30 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                         <Label className="text-sm font-semibold mb-2 block">
                             Filename {hasMultipleFiles ? "(optional)" : "(optional)"}
                         </Label>
-                        <Input
-                            type="text"
-                            value={filename}
-                            onChange={(e) => setFilename(e.target.value)}
-                            disabled={isExporting}
-                            placeholder={hasMultipleFiles ? defaultZipName : mainFile?.name || defaultFileName}
-                            className="w-full"
-                        />
+                        <div className="flex gap-2">
+                            <Input
+                                type="text"
+                                value={filenameName}
+                                onChange={(e) => setFilenameName(e.target.value)}
+                                disabled={isExporting}
+                                placeholder={
+                                    hasMultipleFiles
+                                        ? splitFilename(defaultZipName, ".zip").name
+                                        : mainFile
+                                            ? splitFilename(mainFile.name, ".prisma").name
+                                            : splitFilename(defaultFileName, ".prisma").name
+                                }
+                                className="flex-1 rounded-l rounded-r-0 border-r-0"
+                            />
+                            <Select value={fileExtension} disabled>
+                                <SelectTrigger className="rounded-l-0 rounded-r border-l-0 w-auto min-w-[100px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={fileExtension}>{fileExtension}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     {error && (
