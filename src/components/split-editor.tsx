@@ -212,18 +212,38 @@ export function SplitEditor() {
 
     // Determine Monaco editor theme based on dark mode state
     const editorTheme = useMemo(() => {
-        return isDarkMode ? "vs-dark" : "vs";
+        return isDarkMode ? "pitch-black" : "vs";
     }, [isDarkMode]);
 
     // Update Monaco editor theme when theme changes
     // Use startTransition to make this non-blocking
     useEffect(() => {
         if (monacoRef.current) {
+            // Define theme if not already defined (in case editor mounts after theme change)
+            if (isDarkMode) {
+                monacoRef.current.editor.defineTheme("pitch-black", {
+                    base: "vs-dark",
+                    inherit: true,
+                    rules: [],
+                    colors: {
+                        "editor.background": "#09090b", // zinc-950
+                        "editor.foreground": "#fafafa", // zinc-50
+                        "editorLineNumber.foreground": "#71717a", // zinc-500
+                        "editorLineNumber.activeForeground": "#a1a1aa", // zinc-400
+                        "editor.selectionBackground": "#27272a", // zinc-800
+                        "editor.lineHighlightBackground": "#18181b", // zinc-900
+                        "editorCursor.foreground": "#fafafa", // zinc-50
+                        "editorWhitespace.foreground": "#27272a", // zinc-800
+                        "editorIndentGuide.activeBackground": "#3f3f46", // zinc-700
+                        "editorIndentGuide.background": "#27272a", // zinc-800
+                    },
+                });
+            }
             startTransition(() => {
                 monacoRef.current.editor.setTheme(editorTheme);
             });
         }
-    }, [editorTheme]);
+    }, [editorTheme, isDarkMode]);
 
     // Configure Monaco editor
     const handleEditorDidMount = (editor: any, monaco: any) => {
@@ -247,6 +267,25 @@ export function SplitEditor() {
                     [/[{}[\]]/, "delimiter"],
                     [/[:=]/, "operator"],
                 ],
+            },
+        });
+
+        // Define custom pitch black theme
+        monaco.editor.defineTheme("pitch-black", {
+            base: "vs-dark",
+            inherit: true,
+            rules: [],
+            colors: {
+                "editor.background": "#09090b", // zinc-950
+                "editor.foreground": "#fafafa", // zinc-50
+                "editorLineNumber.foreground": "#71717a", // zinc-500
+                "editorLineNumber.activeForeground": "#a1a1aa", // zinc-400
+                "editor.selectionBackground": "#27272a", // zinc-800
+                "editor.lineHighlightBackground": "#18181b", // zinc-900
+                "editorCursor.foreground": "#fafafa", // zinc-50
+                "editorWhitespace.foreground": "#27272a", // zinc-800
+                "editorIndentGuide.activeBackground": "#3f3f46", // zinc-700
+                "editorIndentGuide.background": "#27272a", // zinc-800
             },
         });
 
