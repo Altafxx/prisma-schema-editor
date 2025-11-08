@@ -27,6 +27,7 @@ import { RelationDialog, type RelationOptions } from "./relation-dialog";
 import { addRelationToSchema, type ConnectionInfo } from "@/lib/schema-updater";
 import { useSettingsStore } from "@/store/settings-store";
 import { toast } from "sonner";
+import { saveNodePositions, loadNodePositions, cleanupNodePositions } from "@/lib/position-storage";
 
 interface HistoryState {
     nodes: Node[];
@@ -308,6 +309,7 @@ export function DiagramCanvas({
     } | null>(null);
     const lastSaveRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const positionSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Initialize history system
     useEffect(() => {
@@ -389,23 +391,45 @@ export function DiagramCanvas({
     useEffect(() => {
         if (schema && schema.models.length > 0) {
             try {
-                const { nodes: newNodes, edges: newEdges } = convertSchemaToNodesAndEdges(schema);
-                const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges);
-                setNodes(layoutedNodes);
-                setEdges(layoutedEdges);
-                lastSaveRef.current = { nodes: [...layoutedNodes], edges: [...layoutedEdges] };
+                // Load saved positions
+                const savedPositions = loadNodePositions();
+
+                // Convert schema to nodes and edges, applying saved positions
+                const { nodes: newNodes, edges: newEdges } = convertSchemaToNodesAndEdges(schema, savedPositions);
+
+                // Only apply auto-layout if we don't have saved positions for all nodes
+                // If we have saved positions, use them; otherwise, use auto-layout
+                const hasAllPositions = newNodes.every(node => savedPositions?.[node.id]);
+                let finalNodes = newNodes;
+
+                if (!hasAllPositions) {
+                    // Apply auto-layout, but preserve saved positions for nodes that have them
+                    const { nodes: layoutedNodes } = getLayoutedElements(newNodes, newEdges);
+                    finalNodes = layoutedNodes.map(node => {
+                        const savedPos = savedPositions?.[node.id];
+                        return savedPos ? { ...node, position: savedPos } : node;
+                    });
+                }
+
+                setNodes(finalNodes);
+                setEdges(newEdges);
+                lastSaveRef.current = { nodes: [...finalNodes], edges: [...newEdges] };
+
+                // Clean up positions for nodes that no longer exist
+                const existingNodeIds = finalNodes.map(node => node.id);
+                cleanupNodePositions(existingNodeIds);
 
                 // Initialize history with new nodes
                 if (historyRef.current) {
-                    historyRef.current.pushToHistory(layoutedNodes, layoutedEdges);
+                    historyRef.current.pushToHistory(finalNodes, newEdges);
                 }
 
                 // Notify parent of changes
                 if (externalOnNodesChange) {
-                    externalOnNodesChange(layoutedNodes);
+                    externalOnNodesChange(finalNodes);
                 }
                 if (externalOnEdgesChange) {
-                    externalOnEdgesChange(layoutedEdges);
+                    externalOnEdgesChange(newEdges);
                 }
             } catch (error) {
                 setNodes([]);
@@ -431,6 +455,27 @@ export function DiagramCanvas({
             }
         };
     }, [nodes, edges, readonly, saveToHistory]);
+
+    // Save node positions when nodes change (debounced)
+    useEffect(() => {
+        if (nodes.length > 0 && !readonly) {
+            // Clear existing timeout
+            if (positionSaveTimeoutRef.current) {
+                clearTimeout(positionSaveTimeoutRef.current);
+            }
+
+            // Debounce position saving to avoid too many localStorage writes
+            positionSaveTimeoutRef.current = setTimeout(() => {
+                saveNodePositions(nodes);
+            }, 500);
+        }
+
+        return () => {
+            if (positionSaveTimeoutRef.current) {
+                clearTimeout(positionSaveTimeoutRef.current);
+            }
+        };
+    }, [nodes, readonly]);
 
     // Track connection start to capture actual drag direction
     const onConnectStart = useCallback(

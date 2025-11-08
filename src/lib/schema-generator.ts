@@ -106,7 +106,8 @@ export function generatePrismaSchema(
 }
 
 export function convertSchemaToNodesAndEdges(
-    schema: ParsedPrismaSchema
+    schema: ParsedPrismaSchema,
+    savedPositions?: Record<string, { x: number; y: number }> | null
 ): { nodes: Node<DiagramNodeData>[]; edges: Edge[] } {
     const nodes: Node<DiagramNodeData>[] = [];
     const edges: Edge[] = [];
@@ -126,10 +127,14 @@ export function convertSchemaToNodesAndEdges(
             })),
         };
 
+        // Use saved position if available, otherwise use default layout
+        const savedPosition = savedPositions?.[model.name];
+        const defaultPosition = { x: index * 300, y: 0 };
+
         nodes.push({
             id: model.name,
             type: "modelNode",
-            position: { x: index * 300, y: 0 },
+            position: savedPosition || defaultPosition,
             data: nodeData,
             draggable: true,
         });
