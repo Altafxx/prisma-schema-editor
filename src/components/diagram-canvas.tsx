@@ -15,7 +15,6 @@ import ReactFlow, {
     EdgeTypes,
     Handle,
     Position,
-    useReactFlow,
     type BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
@@ -28,6 +27,7 @@ import { addRelationToSchema, type ConnectionInfo } from "@/lib/schema-updater";
 import { useSettingsStore } from "@/store/settings-store";
 import { toast } from "sonner";
 import { saveNodePositions, loadNodePositions, cleanupNodePositions } from "@/lib/position-storage";
+import { exportDiagramToSVG } from "@/lib/diagram-export";
 
 interface HistoryState {
     nodes: Node[];
@@ -35,22 +35,15 @@ interface HistoryState {
 }
 
 // Custom node component for database tables
-function ModelNode({ data }: { data: DiagramNodeData }) {
+function ModelNode({ data, allModelNames }: { data: DiagramNodeData; allModelNames: Set<string> }) {
     const nodeRef = useRef<HTMLDivElement>(null);
     const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [fieldPositions, setFieldPositions] = useState<Record<string, number>>({});
-    const { getNodes } = useReactFlow();
-
-    // Get all model names to detect relation fields
-    const modelNames = useMemo(() => {
-        const nodes = getNodes();
-        return new Set(nodes.map(node => node.data.modelName));
-    }, [getNodes]);
 
     // Check if a field is a relation field (type matches a model name)
     const isRelationField = useCallback((field: DiagramNodeData['fields'][0]) => {
-        return modelNames.has(field.type);
-    }, [modelNames]);
+        return allModelNames.has(field.type);
+    }, [allModelNames]);
 
     // Sort fields: relation fields at the bottom
     const sortedFields = useMemo(() => {
@@ -232,9 +225,7 @@ function ModelNode({ data }: { data: DiagramNodeData }) {
     );
 }
 
-const nodeTypes = {
-    modelNode: ModelNode,
-};
+// Node types will be created dynamically with allModelNames
 
 const edgeTypes: EdgeTypes = {
     smoothstep: CustomEdge,
@@ -278,6 +269,7 @@ interface DiagramCanvasProps {
     onEdgesChange?: (edges: Edge[]) => void;
     readonly?: boolean;
     onSchemaUpdate?: (schemaContent: string) => void;
+    onExportReady?: (exportFn: (backgroundTheme?: "light" | "dark", nodeTheme?: "light" | "dark") => Promise<string>) => void;
 }
 
 export function DiagramCanvas({
@@ -287,10 +279,22 @@ export function DiagramCanvas({
     onEdgesChange: externalOnEdgesChange,
     readonly = false,
     onSchemaUpdate,
+    onExportReady,
 }: DiagramCanvasProps) {
     const { gridPattern, gridOpacity } = useSettingsStore((state) => state.settings);
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const reactFlowWrapperRef = useRef<HTMLDivElement>(null);
+
+    // Get all model names for relation field detection
+    const allModelNames = useMemo(() => {
+        return new Set(nodes.map((node) => node.data?.modelName).filter(Boolean));
+    }, [nodes]);
+
+    // Create node types with allModelNames
+    const nodeTypes = useMemo(() => ({
+        modelNode: (props: { data: DiagramNodeData }) => <ModelNode {...props} allModelNames={allModelNames} />,
+    }), [allModelNames]);
     const [pendingConnection, setPendingConnection] = useState<{
         connection: Connection;
         connectionInfo: ConnectionInfo;
@@ -792,6 +796,20 @@ export function DiagramCanvas({
         };
     }, [nodes]);
 
+    // Expose export function via callback
+    useEffect(() => {
+        if (onExportReady && nodes.length > 0) {
+            const exportFn = async (backgroundTheme?: "light" | "dark", nodeTheme?: "light" | "dark") => {
+                return exportDiagramToSVG(nodes, edges, {
+                    padding: 50,
+                    backgroundTheme,
+                    nodeTheme,
+                });
+            };
+            onExportReady(exportFn);
+        }
+    }, [onExportReady, nodes, edges]);
+
     if (!schema || schema.models.length === 0) {
         return (
             <div className="w-full h-full bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
@@ -805,7 +823,7 @@ export function DiagramCanvas({
     }
 
     return (
-        <div className="w-full h-full bg-zinc-50 dark:bg-zinc-950">
+        <div ref={reactFlowWrapperRef} className="w-full h-full bg-zinc-50 dark:bg-zinc-950">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

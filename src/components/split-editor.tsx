@@ -51,6 +51,7 @@ export function SplitEditor() {
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isUpdatingFromDiagramRef = useRef(false);
     const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const diagramExportFnRef = useRef<((backgroundTheme?: "light" | "dark", nodeTheme?: "light" | "dark") => Promise<string>) | null>(null);
 
     // Check if saved content was loaded and show toast
     const hasShownLoadToast = useRef(false);
@@ -347,7 +348,15 @@ export function SplitEditor() {
     return (
         <div className="flex h-screen w-full overflow-hidden">
             {/* File Explorer */}
-            <FileExplorer />
+            <FileExplorer
+                onExportDiagram={diagramExportFnRef.current ? async (backgroundTheme?: "light" | "dark", nodeTheme?: "light" | "dark") => {
+                    try {
+                        return await diagramExportFnRef.current!(backgroundTheme, nodeTheme);
+                    } catch (error) {
+                        return null;
+                    }
+                } : undefined}
+            />
 
             {/* Resizable Editor and Canvas */}
             <ResizablePanelGroup direction="horizontal" className="flex-1">
@@ -436,6 +445,9 @@ export function SplitEditor() {
                                 onNodesChange={handleDiagramNodesChange}
                                 onEdgesChange={handleDiagramEdgesChange}
                                 readonly={false}
+                                onExportReady={(exportFn) => {
+                                    diagramExportFnRef.current = exportFn;
+                                }}
                                 onSchemaUpdate={(updatedSchema) => {
                                     // Update the main schema file with the new relation
                                     const mainFile = schemaFiles.find((f) => f.isMain);

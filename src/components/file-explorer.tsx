@@ -12,7 +12,11 @@ import { useSettingsStore } from "@/store/settings-store";
 import { SidebarWrapper } from "./sidebar-wrapper";
 import { toast } from "sonner";
 
-export function FileExplorer() {
+interface FileExplorerProps {
+    onExportDiagram?: (backgroundTheme?: "light" | "dark", nodeTheme?: "light" | "dark") => Promise<string | null>;
+}
+
+export function FileExplorer({ onExportDiagram }: FileExplorerProps) {
     const {
         schemaFiles,
         activeFileId,
@@ -102,7 +106,11 @@ export function FileExplorer() {
                 />
             </SidebarProvider>
             <ImportDialog open={showImportDialog} onClose={() => setShowImportDialog(false)} />
-            <ExportDialog open={showExportDialog} onClose={() => setShowExportDialog(false)} />
+            <ExportDialog
+                open={showExportDialog}
+                onClose={() => setShowExportDialog(false)}
+                onExportDiagram={onExportDiagram}
+            />
             <SettingsDialog open={showSettingsDialog} onClose={() => setShowSettingsDialog(false)} />
             <DeleteDialog
                 open={showDeleteDialog}
