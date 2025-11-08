@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useSchemaStore } from "@/store/schema-store";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ImportDialog } from "./import-dialog";
-import { ExportDialog } from "./export-dialog";
-import { SettingsDialog } from "./settings-dialog";
-import { DeleteDialog } from "./delete-dialog";
-import { CreateFileDialog } from "./create-file-dialog";
+import { ImportDialog } from "./dialogs/import-dialog";
+import { ExportDialog } from "./dialogs/export-dialog";
+import { SettingsDialog } from "./dialogs/settings-dialog";
+import { DeleteDialog } from "./dialogs/delete-dialog";
+import { CreateFileDialog } from "./dialogs/create-file-dialog";
 import { useSettingsStore } from "@/store/settings-store";
 import { SidebarWrapper } from "./sidebar-wrapper";
 import { toast } from "sonner";

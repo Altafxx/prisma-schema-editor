@@ -1,4 +1,4 @@
-import type { RelationOptions } from "@/components/relation-dialog";
+import type { RelationOptions } from "@/components/dialogs/relation-dialog";
 
 export interface ConnectionInfo {
     sourceModel: string;

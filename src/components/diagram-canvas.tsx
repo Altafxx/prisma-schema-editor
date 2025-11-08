@@ -23,7 +23,7 @@ import type { ParsedPrismaSchema } from "@/types/prisma";
 import { convertSchemaToNodesAndEdges, type DiagramNodeData } from "@/lib/schema-generator";
 import dagre from "dagre";
 import { CustomEdge } from "./custom-edge";
-import { RelationDialog, type RelationOptions } from "./relation-dialog";
+import { RelationDialog, type RelationOptions } from "./dialogs/relation-dialog";
 import { addRelationToSchema, type ConnectionInfo } from "@/lib/schema-updater";
 import { useSettingsStore } from "@/store/settings-store";
 import { toast } from "sonner";

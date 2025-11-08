@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { RelationMode } from "@/components/relation-dialog";
+import type { RelationMode } from "@/components/dialogs/relation-dialog";
 
 export type Theme = "light" | "dark" | "system";
 export type GridPattern = "lines" | "dots" | "none";
