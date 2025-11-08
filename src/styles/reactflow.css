@@ -1,0 +1,75 @@
+/* ReactFlow dark mode styles */
+.dark .react-flow__panel.react-flow__controls,
+.dark .react-flow-controls {
+    background: oklch(0.205 0 0) !important;
+    border: 1px solid oklch(1 0 0 / 10%) !important;
+}
+
+.dark .react-flow__panel.react-flow__controls button,
+.dark .react-flow-controls button {
+    background: oklch(0.269 0 0) !important;
+    border-bottom: 1px solid oklch(1 0 0 / 10%) !important;
+    color: oklch(0.985 0 0) !important;
+}
+
+.dark .react-flow__panel.react-flow__controls button:hover,
+.dark .react-flow-controls button:hover {
+    background: oklch(0.322 0 0) !important;
+}
+
+.dark .react-flow__panel.react-flow__controls button:active,
+.dark .react-flow-controls button:active {
+    background: oklch(0.376 0 0) !important;
+}
+
+/* ReactFlow Controls button icons */
+.dark .react-flow__panel.react-flow__controls button svg,
+.dark .react-flow-controls button svg {
+    fill: oklch(0.985 0 0) !important;
+    stroke: oklch(0.985 0 0) !important;
+}
+
+.dark .react-flow__panel.react-flow__minimap,
+.dark .react-flow-minimap {
+    background: oklch(0.205 0 0) !important;
+    border: 1px solid oklch(1 0 0 / 10%) !important;
+}
+
+.dark .react-flow__panel.react-flow__minimap svg,
+.dark .react-flow-minimap svg {
+    background: oklch(0.205 0 0) !important;
+}
+
+/* ReactFlow minimap node colors in dark mode - override inline fill attributes */
+.dark .react-flow__panel.react-flow__minimap .react-flow__minimap-mask[fill],
+.dark .react-flow-minimap .react-flow__minimap-mask[fill],
+.dark .react-flow__panel.react-flow__minimap .react-flow__minimap-mask,
+.dark .react-flow-minimap .react-flow__minimap-mask {
+    fill: oklch(0.269 0 0) !important;
+}
+
+.dark .react-flow__panel.react-flow__minimap .react-flow__minimap-node[fill],
+.dark .react-flow-minimap .react-flow__minimap-node[fill],
+.dark .react-flow__panel.react-flow__minimap .react-flow__minimap-node,
+.dark .react-flow-minimap .react-flow__minimap-node {
+    fill: oklch(0.322 0 0) !important;
+    stroke: oklch(0.556 0 0) !important;
+}
+
+.dark .react-flow__panel.react-flow__minimap .react-flow__minimap-node-selected[fill],
+.dark .react-flow-minimap .react-flow__minimap-node-selected[fill],
+.dark .react-flow__panel.react-flow__minimap .react-flow__minimap-node-selected,
+.dark .react-flow-minimap .react-flow__minimap-node-selected {
+    fill: oklch(0.488 0.243 264.376) !important;
+    stroke: oklch(0.556 0 0) !important;
+}
+
+/* Additional ReactFlow dark mode overrides */
+.dark .react-flow__panel {
+    background: oklch(0.205 0 0) !important;
+}
+
+.dark .react-flow__minimap-viewport {
+    stroke: oklch(0.556 0 0) !important;
+    fill: transparent !important;
+}
