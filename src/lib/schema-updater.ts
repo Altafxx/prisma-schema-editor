@@ -399,7 +399,31 @@ function addFieldToModel(
     // Add the new field with proper spacing
     updatedModelBody = trimmedBody + `\n${fieldLine}`;
 
-    return beforeModel + updatedModelBody + afterModel;
+    // Ensure closing brace is on its own line with proper spacing
+    // afterModel starts with '}' and possibly whitespace/newlines
+    let formattedAfterModel = afterModel;
+    if (afterModel.trim().startsWith('}')) {
+        // Extract everything after the closing brace and its whitespace
+        // Match: optional whitespace, '}', then any whitespace (including newlines)
+        const match = afterModel.match(/^\s*\}\s*/);
+        if (match) {
+            const afterBrace = afterModel.substring(match[0].length);
+            // Format: newline, closing brace, newline, then rest of content
+            // Always ensure there's a newline after the closing brace
+            if (afterBrace.trim().length > 0) {
+                // There's content after (like another model), ensure newline before it
+                formattedAfterModel = `\n}\n${afterBrace}`;
+            } else {
+                // No content after, just add newline
+                formattedAfterModel = `\n}\n`;
+            }
+        } else {
+            // Fallback: if pattern doesn't match, ensure closing brace is on its own line
+            formattedAfterModel = `\n}\n${afterModel.replace(/^\s*\}\s*/, '')}`;
+        }
+    }
+
+    return beforeModel + updatedModelBody + formattedAfterModel;
 }
 
 function updateFieldInModel(
@@ -554,10 +578,8 @@ function addJunctionModel(
         insertPosition = pos;
     }
 
-    // Generate the junction model
-    const indent = '  ';
-    const junctionModel = `
-model ${junctionModelName} {
+    // Generate the junction model with proper formatting
+    const junctionModel = `\nmodel ${junctionModelName} {
   ${sourceFkField} Int
   ${targetFkField} Int
   ${sourceModel.charAt(0).toLowerCase() + sourceModel.slice(1)} ${sourceModel} @relation(fields: [${sourceFkField}], references: [id])
@@ -567,7 +589,16 @@ model ${junctionModelName} {
 }
 `;
 
-    // Insert the junction model
-    return schemaContent.substring(0, insertPosition) + junctionModel + schemaContent.substring(insertPosition);
+    // Insert the junction model with proper spacing
+    const beforeInsert = schemaContent.substring(0, insertPosition);
+    const afterInsert = schemaContent.substring(insertPosition);
+
+    // Ensure there's a newline before the junction model if the previous content doesn't end with one
+    let prefix = '';
+    if (beforeInsert.length > 0 && !beforeInsert.endsWith('\n') && !beforeInsert.endsWith('\n\n')) {
+        prefix = '\n';
+    }
+
+    return beforeInsert + prefix + junctionModel + afterInsert;
 }
 
