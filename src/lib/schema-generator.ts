@@ -76,18 +76,30 @@ export function generatePrismaSchema(
                 attrs.push("@unique");
             }
 
-            // Handle relations from edges
-            const relationEdge = edges.find(
-                (e) =>
-                    (e.source === node.id && e.targetHandle === field.name) ||
-                    (e.target === node.id && e.sourceHandle === field.name)
-            );
+            // Handle relations - only add @relation if explicitly defined in the schema
+            // Don't auto-add @relation for implicit many-to-many relationships
+            if (field.relationName) {
+                // Field has an explicit relation name from the parsed schema
+                attrs.push(`@relation("${field.relationName}")`);
+            } else {
+                // Check for relations from edges (for explicit relations with foreign keys)
+                const relationEdge = edges.find(
+                    (e) =>
+                        (e.source === node.id && e.targetHandle === field.name) ||
+                        (e.target === node.id && e.sourceHandle === field.name)
+                );
 
-            if (relationEdge) {
-                const targetNode = nodes.find((n) => n.id === relationEdge.target || n.id === relationEdge.source);
-                if (targetNode && targetNode.data) {
-                    const relationName = field.relationName || `rel_${data.modelName}_${targetNode.data.modelName}`;
-                    attrs.push(`@relation(name: "${relationName}")`);
+                if (relationEdge) {
+                    const targetNode = nodes.find((n) => n.id === relationEdge.target || n.id === relationEdge.source);
+                    if (targetNode && targetNode.data) {
+                        // Only add @relation if it's an explicit relation (has foreign key)
+                        // For implicit M-M, we don't add @relation but still show the edge in diagram
+                        const edgeData = relationEdge.data;
+                        if (edgeData?.relationType !== "M-M") {
+                            const relationName = `rel_${data.modelName}_${targetNode.data.modelName}`;
+                            attrs.push(`@relation(name: "${relationName}")`);
+                        }
+                    }
                 }
             }
 
@@ -123,7 +135,7 @@ export function convertSchemaToNodesAndEdges(
                 isList: field.isList,
                 isId: field.attributes?.some((attr) => attr.includes("@id")) || false,
                 isUnique: field.attributes?.some((attr) => attr.includes("@unique")) || false,
-                relationName: field.relation?.name,
+                relationName: field.relation?.name, // Only use explicit relation names from schema
             })),
         };
 
@@ -234,22 +246,17 @@ export function convertSchemaToNodesAndEdges(
                     let actualTargetHandle: string;
 
                     if (isImplicitManyToMany) {
-                        // Use canonical order (alphabetically sorted)
+                        // For implicit M-M, connect from id to id
+                        // Use canonical order (alphabetically sorted) for consistency
                         const [model1, model2] = [model.name, targetModelName].sort();
                         actualSource = model1;
                         actualTarget = model2;
 
-                        // Find the fields from both models
-                        const model1Obj = schema.models.find((m) => m.name === model1);
-                        const model2Obj = schema.models.find((m) => m.name === model2);
-
-                        const model1Field = model1Obj?.fields.find((f) => f.type === model2 && f.isList);
-                        const model2Field = model2Obj?.fields.find((f) => f.type === model1 && f.isList);
-
-                        actualSourceField = model1Field?.name || "";
-                        actualTargetField = model2Field?.name || "";
-                        actualSourceHandle = `${actualSourceField}-right`;
-                        actualTargetHandle = `${actualTargetField}-left`;
+                        // Connect from id to id for implicit many-to-many
+                        actualSourceField = "id";
+                        actualTargetField = "id";
+                        actualSourceHandle = "id-right";
+                        actualTargetHandle = "id-left";
                     } else {
                         // For explicit relations, use the original logic
                         actualSource = model.name;
